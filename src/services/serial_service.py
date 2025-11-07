@@ -407,6 +407,14 @@ class SerialService:
         except Exception as e:
             self.logger.error(f"Failed to list serial ports: {e}")
             return []
+
+    async def connect(self, port: str, vendor_type: Optional[str] = None, baud_rate: Optional[int] = None) -> bool:
+        """Alias for connect_port for backward compatibility."""
+        return await self.connect_port(port, vendor_type)
+
+    async def disconnect(self, port: str) -> bool:
+        """Alias for disconnect_port for backward compatibility."""
+        return await self.disconnect_port(port)
     
     async def connect_port(self, port: str, vendor_type: Optional[str] = None) -> bool:
         """Connect to a serial port"""

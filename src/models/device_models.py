@@ -31,7 +31,9 @@ class SessionModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships
-    command_history = relationship("CommandHistoryModel", back_populates="session")
+    command_history = relationship("CommandHistoryModel",
+                                   primaryjoin="SessionModel.session_id == CommandHistoryModel.session_id",
+                                   back_populates="session")
 
 
 class CommandHistoryModel(Base):
@@ -118,6 +120,7 @@ class Session(BaseModel):
     start_time: datetime
     end_time: Optional[datetime] = None
     status: str = "active"
+    error_message: Optional[str] = None
     vendor_specific_data: Optional[Dict[str, Any]] = None
     
     class Config:

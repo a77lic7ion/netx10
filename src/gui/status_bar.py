@@ -222,14 +222,14 @@ class StatusBarWidget(QWidget):
         self.total_commands = app_state.get("total_commands", 0)
         
         # Update connection status from serial service
-        if hasattr(self.app, 'serial_service'):
+        if hasattr(self.app, 'serial_service') and self.app.serial_service:
             if self.app.serial_service.is_any_connection_active():
                 self.connection_status = "Connected"
             else:
                 self.connection_status = "Disconnected"
         
         # Update AI status from AI service
-        if hasattr(self.app, 'ai_service'):
+        if hasattr(self.app, 'ai_service') and self.app.ai_service:
             if self.app.ai_service.is_processing():
                 self.ai_status = "Processing"
             else:

@@ -172,17 +172,17 @@ class NetworkSwitchAIApp(QMainWindow):
             # Connect to device
             success = await self.session_service.connect_session(session.session_id)
             
-            if success:
-                logger.info(f"Successfully connected to {com_port}")
-                self.session_created.emit(session.session_id)
-            else:
-                logger.error(f"Failed to connect to {com_port}")
-                self.error_occurred.emit("Connection Error", f"Failed to connect to {com_port}")
-                
-        except Exception as e:
-            logger.error(f"Connection error: {e}")
-            self.error_occurred.emit("Connection Error", str(e))
-    
+                        if success:
+                            logger.info(f"Successfully connected to {com_port}")
+                            self.session_created.emit(session.session_id)
+                        else:
+                            logger.error(f"Failed to connect to {com_port}")
+                            error_msg = session.error_message if session and session.error_message else f"Failed to connect to {com_port}"
+                            self.error_occurred.emit("Connection Error", error_msg)
+            
+                    except Exception as e:
+                        logger.error(f"Connection error: {e}")
+                        self.error_occurred.emit("Connection Error", str(e))    
     async def _disconnect_device(self):
         """Disconnect from current device"""
         if not self._current_session_id:
