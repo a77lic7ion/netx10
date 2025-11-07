@@ -204,3 +204,178 @@
 2025-11-07 21:38:28,626 - status_bar - INFO - __init__:53 - {"event": "Status bar initialized", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T19:38:28.626902Z"}
 2025-11-07 21:38:28,628 - main_window - INFO - __init__:64 - {"event": "Main window initialized", "logger": "main_window", "level": "info", "timestamp": "2025-11-07T19:38:28.628708Z"}
 2025-11-07 21:38:28,637 - core.application - INFO - __init__:64 - {"event": "NetworkSwitch AI Assistant initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T19:38:28.637435Z"}
+2025-11-07 21:39:20,655 - core.application - INFO - _connect_device:173 - {"event": "Connecting to COM7 (h3c) at 9600 baud", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T19:39:20.655428Z"}
+2025-11-07 21:39:20,670 - session_service - INFO - create_session:100 - {"event": "Session created: d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:39:20.670240Z"}
+2025-11-07 21:39:20,670 - serial_connection_COM7 - INFO - connect:67 - {"event": "Connecting to COM7 at 9600 baud", "logger": "serial_connection_COM7", "level": "info", "timestamp": "2025-11-07T19:39:20.670499Z"}
+2025-11-07 21:39:20,670 - serial_connection_COM7 - INFO - _apply_vendor_settings:136 - {"event": "Applied vendor settings for h3c", "logger": "serial_connection_COM7", "level": "info", "timestamp": "2025-11-07T19:39:20.670595Z"}
+2025-11-07 21:39:20,732 - serial_connection_COM7 - INFO - connect:92 - {"event": "Successfully connected to COM7", "logger": "serial_connection_COM7", "level": "info", "timestamp": "2025-11-07T19:39:20.732849Z"}
+2025-11-07 21:39:20,736 - status_bar - INFO - on_connection_status_changed:149 - {"event": "Connection established: Connected", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T19:39:20.736850Z"}
+2025-11-07 21:39:20,737 - serial_service - INFO - connect_port:440 - {"event": "Connected to port COM7", "logger": "serial_service", "level": "info", "timestamp": "2025-11-07T19:39:20.737310Z"}
+2025-11-07 21:39:20,746 - database_service - ERROR - get_session:223 - {"event": "Database session error: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:39:20.746805Z"}
+2025-11-07 21:39:20,747 - database_service - ERROR - save_session:265 - {"event": "Failed to save session: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:39:20.747500Z"}
+2025-11-07 21:39:20,747 - session_service - INFO - connect_session:128 - {"event": "Session connected: d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:39:20.747669Z"}
+2025-11-07 21:39:20,748 - status_bar - INFO - on_connection_status_changed:149 - {"event": "Connection established: Connected", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T19:39:20.748217Z"}
+2025-11-07 21:39:20,748 - core.application - INFO - _connect_device:188 - {"event": "Successfully connected to COM7", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T19:39:20.748416Z"}
+2025-11-07 21:39:20,750 - status_bar - INFO - on_session_created:171 - {"event": "Session created: d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T19:39:20.750313Z"}
+2025-11-07 21:39:33,152 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:39:33.152567Z"}
+2025-11-07 21:39:33,152 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:39:33.152862Z"}
+2025-11-07 21:39:44,444 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:39:44.444636Z"}
+2025-11-07 21:39:44,444 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:39:44.444896Z"}
+2025-11-07 21:39:44,587 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:39:44.587309Z"}
+2025-11-07 21:39:44,587 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:39:44.587568Z"}
+2025-11-07 21:40:07,317 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:40:07.317440Z"}
+2025-11-07 21:40:07,317 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:40:07.317670Z"}
+2025-11-07 21:40:07,482 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:40:07.481950Z"}
+2025-11-07 21:40:07,482 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:40:07.482283Z"}
+2025-11-07 21:40:25,971 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:40:25.971276Z"}
+2025-11-07 21:40:25,971 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:40:25.971524Z"}
+2025-11-07 21:40:26,127 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:40:26.126983Z"}
+2025-11-07 21:40:26,127 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:40:26.127230Z"}
+2025-11-07 21:40:48,470 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:40:48.470946Z"}
+2025-11-07 21:40:48,471 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:40:48.471198Z"}
+2025-11-07 21:40:48,627 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:40:48.627683Z"}
+2025-11-07 21:40:48,627 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:40:48.627913Z"}
+2025-11-07 21:40:48,797 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:40:48.797909Z"}
+2025-11-07 21:40:48,798 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:40:48.798261Z"}
+2025-11-07 21:40:48,955 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:40:48.955233Z"}
+2025-11-07 21:40:48,955 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:40:48.955508Z"}
+2025-11-07 21:40:49,098 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:40:49.098724Z"}
+2025-11-07 21:40:49,098 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:40:49.098959Z"}
+2025-11-07 21:41:04,815 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:41:04.815308Z"}
+2025-11-07 21:41:04,815 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:41:04.815723Z"}
+2025-11-07 21:41:04,958 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:41:04.958940Z"}
+2025-11-07 21:41:04,959 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:41:04.959393Z"}
+2025-11-07 21:41:27,146 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:41:27.146367Z"}
+2025-11-07 21:41:27,146 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:41:27.146661Z"}
+2025-11-07 21:41:27,299 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:41:27.299723Z"}
+2025-11-07 21:41:27,300 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:41:27.300010Z"}
+2025-11-07 21:41:27,442 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:41:27.442841Z"}
+2025-11-07 21:41:27,443 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:41:27.443124Z"}
+2025-11-07 21:41:55,764 - core.application - INFO - _execute_command:236 - {"event": "Executing command: sys", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T19:41:55.764411Z"}
+2025-11-07 21:41:55,765 - core.application - INFO - _execute_command:236 - {"event": "Executing command: sys", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T19:41:55.765026Z"}
+2025-11-07 21:41:56,474 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:41:56.474510Z"}
+2025-11-07 21:41:56,474 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:41:56.474774Z"}
+2025-11-07 21:41:56,600 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:41:56.600120Z"}
+2025-11-07 21:41:56,600 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:41:56.600394Z"}
+2025-11-07 21:41:56,770 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:41:56.770246Z"}
+2025-11-07 21:41:56,770 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:41:56.770547Z"}
+2025-11-07 21:41:56,910 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:41:56.910126Z"}
+2025-11-07 21:41:56,910 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:41:56.910396Z"}
+2025-11-07 21:41:57,049 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:41:57.049907Z"}
+2025-11-07 21:41:57,050 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:41:57.050204Z"}
+2025-11-07 21:42:05,753 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:05.753496Z"}
+2025-11-07 21:42:05,754 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:05.754348Z"}
+2025-11-07 21:42:05,757 - database_service - ERROR - get_session:223 - {"event": "Database session error: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:42:05.757695Z"}
+2025-11-07 21:42:05,758 - database_service - ERROR - save_session:265 - {"event": "Failed to save session: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:42:05.758051Z"}
+2025-11-07 21:42:05,758 - session_service - INFO - execute_command:214 - {"event": "Command executed in session d5650766-293f-4aa5-867e-fc627017b6b5: sys", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:05.758209Z"}
+2025-11-07 21:42:05,758 - core.application - INFO - _execute_command:241 - {"event": "Command executed successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T19:42:05.758285Z"}
+2025-11-07 21:42:05,760 - database_service - ERROR - get_session:223 - {"event": "Database session error: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:42:05.760422Z"}
+2025-11-07 21:42:05,760 - database_service - ERROR - save_session:265 - {"event": "Failed to save session: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:42:05.760670Z"}
+2025-11-07 21:42:05,760 - session_service - INFO - execute_command:214 - {"event": "Command executed in session d5650766-293f-4aa5-867e-fc627017b6b5: sys", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:05.760796Z"}
+2025-11-07 21:42:05,760 - core.application - INFO - _execute_command:241 - {"event": "Command executed successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T19:42:05.760865Z"}
+2025-11-07 21:42:07,486 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:07.486668Z"}
+2025-11-07 21:42:07,486 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:07.486973Z"}
+2025-11-07 21:42:07,625 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:07.625665Z"}
+2025-11-07 21:42:07,625 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:07.625946Z"}
+2025-11-07 21:42:07,767 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:07.767803Z"}
+2025-11-07 21:42:07,768 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:07.768044Z"}
+2025-11-07 21:42:07,907 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:07.907517Z"}
+2025-11-07 21:42:07,907 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:07.907804Z"}
+2025-11-07 21:42:08,314 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:08.314621Z"}
+2025-11-07 21:42:08,314 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:08.314896Z"}
+2025-11-07 21:42:08,486 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:08.486058Z"}
+2025-11-07 21:42:08,486 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:08.486297Z"}
+2025-11-07 21:42:41,544 - database_service - ERROR - get_session:223 - {"event": "Database session error: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:42:41.544593Z"}
+2025-11-07 21:42:41,544 - database_service - ERROR - save_session:265 - {"event": "Failed to save session: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:42:41.544964Z"}
+2025-11-07 21:42:41,545 - session_service - INFO - fetch_device_info:314 - {"event": "Fetched device info for session d5650766-293f-4aa5-867e-fc627017b6b5: {'device_model': 'H3C-MOCK-1', 'os_version': 'mock-1.0', 'serial_number': 'MOCK123456', 'hostname': 'h3c-device', 'uptime': '0 days'}", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:41.545158Z"}
+2025-11-07 21:42:43,235 - qasync._QEventLoop - ERROR - __log_error:770 - Exception in callback Task.task_wakeup()
+handle: <Handle Task.task_wakeup()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task cancelling name='Task-40' coro=<NetworkSwitchAIApp.send_enter() running at d:\GitHub\netx10\src\core\application.py:418> wait_for=<Future cancelled>> while another task <Task pending name='Task-50' coro=<NetworkSwitchAIApp.fetch_device_info() running at d:\GitHub\netx10\src\core\application.py:445>> is being executed.
+2025-11-07 21:42:43,393 - qasync._QEventLoop - ERROR - __log_error:770 - Exception in callback Task.task_wakeup()
+handle: <Handle Task.task_wakeup()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task cancelling name='Task-41' coro=<NetworkSwitchAIApp.send_enter() running at d:\GitHub\netx10\src\core\application.py:418> wait_for=<Future cancelled>> while another task <Task pending name='Task-50' coro=<NetworkSwitchAIApp.fetch_device_info() running at d:\GitHub\netx10\src\core\application.py:445>> is being executed.
+2025-11-07 21:42:43,567 - qasync._QEventLoop - ERROR - __log_error:770 - Exception in callback Task.task_wakeup()
+handle: <Handle Task.task_wakeup()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task cancelling name='Task-42' coro=<NetworkSwitchAIApp.send_enter() running at d:\GitHub\netx10\src\core\application.py:418> wait_for=<Future cancelled>> while another task <Task pending name='Task-50' coro=<NetworkSwitchAIApp.fetch_device_info() running at d:\GitHub\netx10\src\core\application.py:445>> is being executed.
+2025-11-07 21:42:43,721 - qasync._QEventLoop - ERROR - __log_error:770 - Exception in callback Task.task_wakeup()
+handle: <Handle Task.task_wakeup()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task cancelling name='Task-43' coro=<NetworkSwitchAIApp.send_enter() running at d:\GitHub\netx10\src\core\application.py:418> wait_for=<Future cancelled>> while another task <Task pending name='Task-50' coro=<NetworkSwitchAIApp.fetch_device_info() running at d:\GitHub\netx10\src\core\application.py:445>> is being executed.
+2025-11-07 21:42:43,912 - qasync._QEventLoop - ERROR - __log_error:770 - Exception in callback Task.task_wakeup()
+handle: <Handle Task.task_wakeup()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task cancelling name='Task-44' coro=<NetworkSwitchAIApp.send_enter() running at d:\GitHub\netx10\src\core\application.py:418> wait_for=<Future cancelled>> while another task <Task pending name='Task-50' coro=<NetworkSwitchAIApp.fetch_device_info() running at d:\GitHub\netx10\src\core\application.py:445>> is being executed.
+2025-11-07 21:42:43,970 - qasync._QEventLoop - ERROR - __log_error:770 - Exception in callback Task.task_wakeup()
+handle: <Handle Task.task_wakeup()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task pending name='Task-6' coro=<SerialConnection._read_loop() running at d:\GitHub\netx10\src\services\serial_service.py:175> wait_for=<Future finished result=None>> while another task <Task pending name='Task-50' coro=<NetworkSwitchAIApp.fetch_device_info() running at d:\GitHub\netx10\src\core\application.py:445>> is being executed.
+2025-11-07 21:42:44,102 - qasync._QEventLoop - ERROR - __log_error:770 - Exception in callback Task.task_wakeup()
+handle: <Handle Task.task_wakeup()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task cancelling name='Task-45' coro=<NetworkSwitchAIApp.send_enter() running at d:\GitHub\netx10\src\core\application.py:418> wait_for=<Future cancelled>> while another task <Task pending name='Task-50' coro=<NetworkSwitchAIApp.fetch_device_info() running at d:\GitHub\netx10\src\core\application.py:445>> is being executed.
+2025-11-07 21:42:45,372 - database_service - ERROR - get_session:223 - {"event": "Database session error: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:42:45.372505Z"}
+2025-11-07 21:42:45,372 - database_service - ERROR - save_session:265 - {"event": "Failed to save session: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:42:45.372845Z"}
+2025-11-07 21:42:49,974 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:49.974764Z"}
+2025-11-07 21:42:49,974 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:49.974975Z"}
+2025-11-07 21:42:50,126 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:50.126335Z"}
+2025-11-07 21:42:50,126 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:50.126603Z"}
+2025-11-07 21:42:50,424 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:50.424041Z"}
+2025-11-07 21:42:50,424 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:50.424266Z"}
+2025-11-07 21:42:50,877 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:50.877115Z"}
+2025-11-07 21:42:50,877 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:50.877365Z"}
+2025-11-07 21:42:52,331 - core.application - INFO - _disconnect_device:204 - {"event": "Disconnecting from session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T19:42:52.331720Z"}
+2025-11-07 21:42:52,331 - serial_connection_COM7 - INFO - disconnect:307 - {"event": "Disconnecting from COM7", "logger": "serial_connection_COM7", "level": "info", "timestamp": "2025-11-07T19:42:52.331931Z"}
+2025-11-07 21:42:52,384 - serial_connection_COM7 - INFO - disconnect:320 - {"event": "Disconnected from COM7", "logger": "serial_connection_COM7", "level": "info", "timestamp": "2025-11-07T19:42:52.384323Z"}
+2025-11-07 21:42:52,385 - status_bar - INFO - on_connection_status_changed:151 - {"event": "Connection status: Disconnected", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T19:42:52.385037Z"}
+2025-11-07 21:42:52,385 - serial_service - INFO - disconnect_port:462 - {"event": "Disconnected from port COM7", "logger": "serial_service", "level": "info", "timestamp": "2025-11-07T19:42:52.385325Z"}
+2025-11-07 21:42:52,389 - database_service - ERROR - get_session:223 - {"event": "Database session error: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:42:52.389815Z"}
+2025-11-07 21:42:52,390 - database_service - ERROR - save_session:265 - {"event": "Failed to save session: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:42:52.390114Z"}
+2025-11-07 21:42:52,390 - session_service - INFO - disconnect_session:172 - {"event": "Session disconnected: d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:52.390237Z"}
+2025-11-07 21:42:52,390 - status_bar - INFO - on_connection_status_changed:151 - {"event": "Connection status: Disconnected", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T19:42:52.390570Z"}
+2025-11-07 21:42:52,390 - core.application - INFO - _disconnect_device:211 - {"event": "Successfully disconnected", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T19:42:52.390747Z"}
+2025-11-07 21:42:52,392 - status_bar - INFO - on_session_ended:179 - {"event": "Session ended: d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T19:42:52.392081Z"}
+2025-11-07 21:42:55,640 - core.application - INFO - _connect_device:173 - {"event": "Connecting to COM7 (h3c) at 9600 baud", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T19:42:55.640479Z"}
+2025-11-07 21:42:55,653 - session_service - INFO - create_session:100 - {"event": "Session created: 3dfccda6-e8aa-4132-b10d-098f79e34f06", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:55.653123Z"}
+2025-11-07 21:42:55,653 - serial_connection_COM7 - INFO - connect:67 - {"event": "Connecting to COM7 at 9600 baud", "logger": "serial_connection_COM7", "level": "info", "timestamp": "2025-11-07T19:42:55.653583Z"}
+2025-11-07 21:42:55,653 - serial_connection_COM7 - INFO - _apply_vendor_settings:136 - {"event": "Applied vendor settings for h3c", "logger": "serial_connection_COM7", "level": "info", "timestamp": "2025-11-07T19:42:55.653713Z"}
+2025-11-07 21:42:55,713 - serial_connection_COM7 - INFO - connect:92 - {"event": "Successfully connected to COM7", "logger": "serial_connection_COM7", "level": "info", "timestamp": "2025-11-07T19:42:55.713234Z"}
+2025-11-07 21:42:55,713 - status_bar - INFO - on_connection_status_changed:149 - {"event": "Connection established: Connected", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T19:42:55.713817Z"}
+2025-11-07 21:42:55,714 - serial_service - INFO - connect_port:440 - {"event": "Connected to port COM7", "logger": "serial_service", "level": "info", "timestamp": "2025-11-07T19:42:55.714087Z"}
+2025-11-07 21:42:55,718 - database_service - ERROR - get_session:223 - {"event": "Database session error: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:42:55.718212Z"}
+2025-11-07 21:42:55,718 - database_service - ERROR - save_session:265 - {"event": "Failed to save session: 'Session' object has no attribute 'end_time'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T19:42:55.718487Z"}
+2025-11-07 21:42:55,718 - session_service - INFO - connect_session:128 - {"event": "Session connected: 3dfccda6-e8aa-4132-b10d-098f79e34f06", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:55.718599Z"}
+2025-11-07 21:42:55,718 - status_bar - INFO - on_connection_status_changed:149 - {"event": "Connection established: Connected", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T19:42:55.718882Z"}
+2025-11-07 21:42:55,719 - core.application - INFO - _connect_device:188 - {"event": "Successfully connected to COM7", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T19:42:55.719037Z"}
+2025-11-07 21:42:55,720 - status_bar - INFO - on_session_created:171 - {"event": "Session created: 3dfccda6-e8aa-4132-b10d-098f79e34f06", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T19:42:55.720266Z"}
+2025-11-07 21:42:58,034 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:58.034214Z"}
+2025-11-07 21:42:58,034 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:58.034460Z"}
+2025-11-07 21:42:58,204 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:58.204273Z"}
+2025-11-07 21:42:58,204 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:58.204497Z"}
+2025-11-07 21:42:58,657 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:42:58.657401Z"}
+2025-11-07 21:42:58,657 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session d5650766-293f-4aa5-867e-fc627017b6b5", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:42:58.657624Z"}
+2025-11-07 21:43:07,801 - serial_connection_COM7 - WARNING - send_command:293 - {"event": "Command timeout after 10.0s", "logger": "serial_connection_COM7", "level": "warning", "timestamp": "2025-11-07T19:43:07.801127Z"}
+2025-11-07 21:43:07,801 - session_service - INFO - send_enter:253 - {"event": "Sent ENTER in session 3dfccda6-e8aa-4132-b10d-098f79e34f06", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T19:43:07.801525Z"}
