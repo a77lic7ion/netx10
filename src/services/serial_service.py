@@ -43,7 +43,8 @@ class SerialConnection:
 
         # Vendor-specific settings
         self.vendor_type: Optional[str] = None
-        self.prompt_pattern: Optional[str] = None
+        # Support multiple vendor prompt patterns
+        self.prompt_patterns: Optional[List[str]] = None
         self.login_sequence: Optional[List[str]] = None
         
         # Data handling
@@ -126,8 +127,9 @@ class SerialConnection:
                 self.timeout = vendor_config["timeout"]
             
             # Set prompt pattern for command completion detection
-            if "prompt_pattern" in vendor_config:
-                self.prompt_pattern = vendor_config["prompt_pattern"]
+            # Accept multiple prompt patterns from vendor config
+            if "prompt_patterns" in vendor_config:
+                self.prompt_patterns = vendor_config["prompt_patterns"]
             
             # Set login sequence if needed
             if "login_sequence" in vendor_config:
@@ -204,18 +206,25 @@ class SerialConnection:
     async def _process_receive_buffer(self):
         """Process received data buffer"""
         # Look for prompt patterns indicating command completion
-        if self.prompt_pattern:
-            prompt_match = re.search(self.prompt_pattern, self.receive_buffer)
-            if prompt_match:
+        if self.prompt_patterns:
+            earliest_match = None
+            for pat in self.prompt_patterns:
+                try:
+                    m = re.search(pat, self.receive_buffer)
+                except re.error:
+                    continue
+                if m and (earliest_match is None or m.start() < earliest_match.start()):
+                    earliest_match = m
+            if earliest_match:
                 # Extract response (everything before the prompt)
-                response_text = self.receive_buffer[:prompt_match.start()].strip()
-                
+                response_text = self.receive_buffer[:earliest_match.start()].strip()
+
                 if response_text and self.response_callback:
                     await asyncio.to_thread(self.response_callback, response_text)
                     self.responses_received += 1
-                
+
                 # Keep the prompt for next command
-                self.receive_buffer = self.receive_buffer[prompt_match.end():]
+                self.receive_buffer = self.receive_buffer[earliest_match.end():]
         
         # Handle line-by-line processing for real-time output
         lines = self.receive_buffer.split('\n')
@@ -269,10 +278,21 @@ class SerialConnection:
         # Set up temporary response handler
         original_callback = self.response_callback
         
-        async def command_response_handler(data: str):
+        # Callback must be synchronous because it is invoked via to_thread
+        def command_response_handler(data: str):
             response_data.append(data)
-            # Check if response is complete (contains prompt)
-            if self.prompt_pattern and re.search(self.prompt_pattern, data):
+            # If no vendor prompt patterns configured, consider first chunk as completion
+            if not self.prompt_patterns:
+                response_event.set()
+                return
+            # Check if response is complete (contains any configured prompt)
+            try:
+                for pat in self.prompt_patterns:
+                    if re.search(pat, data):
+                        response_event.set()
+                        return
+            except re.error:
+                # Fallback: set event to avoid hanging
                 response_event.set()
         
         self.response_callback = command_response_handler

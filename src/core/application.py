@@ -439,17 +439,15 @@ class NetworkSwitchAIApp(QMainWindow):
         )
         self.terminal_data_received.emit(summary)
 
+        # Optional: auto-apply hostname as device name if empty (no UI prompt here)
         try:
-            from PySide6.QtWidgets import QInputDialog
-            default_name = info.get("hostname") or ""
-            device_name, ok = QInputDialog.getText(self, "Save Device Name", "Enter a device name:", text=default_name)
-            if ok and device_name:
-                session = self.session_service.active_sessions.get(self._current_session_id)
-                if session:
-                    session.device_name = device_name
-                    await self.db.update_session(session)
-                    self.terminal_data_received.emit(f"Saved device name: {device_name}\n")
+            session = self.session_service.active_sessions.get(self._current_session_id)
+            if session and not getattr(session, "device_name", None) and info.get("hostname"):
+                session.device_name = info.get("hostname")
+                # Persist using DB mapping to avoid runtime model mismatches
+                await self.db.update_session(self.session_service._to_db_session(session))
+                self.terminal_data_received.emit(f"Saved device name: {session.device_name}\n")
         except Exception as e:
-            logger.error(f"Device name prompt error: {e}")
+            logger.error(f"Device name persistence error: {e}")
 
         return info

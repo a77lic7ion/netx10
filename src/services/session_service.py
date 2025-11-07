@@ -10,7 +10,7 @@ from vendor.vendor_factory import VendorFactory
 from core.config import AppConfig
 from core.constants import SessionStatus, VendorType
 from utils.logging import get_logger
-#from models.device_models import Session, CommandResult, DeviceInfo
+from models.device_models import Session as DBSession
 
 class Session:
     def __init__(self, session_id: str, com_port: str, baud_rate: int, vendor_type: str, start_time: datetime, status: SessionStatus):
@@ -73,8 +73,26 @@ class SessionService(QObject):
         # Active sessions
         self.active_sessions: Dict[str, Session] = {}
         self.vendor_factory = VendorFactory()
-        
+
         self.logger.info("Session service initialized")
+
+    def _to_db_session(self, session: "Session") -> DBSession:
+        """Convert internal Session to Pydantic DB Session model."""
+        status_str = session.status.value if hasattr(session.status, "value") else str(session.status)
+        return DBSession(
+            session_id=session.session_id,
+            device_name=session.device_name,
+            com_port=session.com_port,
+            baud_rate=session.baud_rate,
+            vendor_type=session.vendor_type,
+            device_model=session.device_model,
+            os_version=session.os_version,
+            start_time=session.start_time,
+            end_time=session.disconnected_at,
+            status=status_str,
+            error_message=getattr(session, "error_message", None),
+            vendor_specific_data=session.vendor_specific_data,
+        )
     
     async def create_session(self, com_port: str, vendor_type: str, baud_rate: int = 9600) -> Session:
         """Create a new device session"""
@@ -94,8 +112,8 @@ class SessionService(QObject):
             # Store session
             self.active_sessions[session_id] = session
             
-            # Save to database
-            await self.db.save_session(session)
+            # Save to database with proper model mapping
+            await self.db.save_session(self._to_db_session(session))
             
             self.logger.info(f"Session created: {session_id}")
             self.session_created.emit(session_id)
@@ -123,7 +141,7 @@ class SessionService(QObject):
                 session.connected_at = datetime.now()
                 
                 # Update database
-                await self.db.update_session(session)
+                await self.db.update_session(self._to_db_session(session))
                 
                 self.logger.info(f"Session connected: {session_id}")
                 self.session_connected.emit(session_id)
@@ -133,7 +151,7 @@ class SessionService(QObject):
                 session.error_message = "Failed to establish connection"
                 
                 # Update database
-                await self.db.update_session(session)
+                await self.db.update_session(self._to_db_session(session))
                 
                 self.logger.error(f"Failed to connect session: {session_id}")
                 self.session_error.emit(session_id, "Connection Error", "Failed to establish connection")
@@ -167,7 +185,7 @@ class SessionService(QObject):
             session.disconnected_at = datetime.now()
             
             # Update database
-            await self.db.update_session(session)
+            await self.db.update_session(self._to_db_session(session))
             
             self.logger.info(f"Session disconnected: {session_id}")
             self.session_disconnected.emit(session_id)
@@ -205,7 +223,7 @@ class SessionService(QObject):
             session.add_command(command, result.output, result.success)
             
             # Update database
-            await self.db.update_session(session)
+            await self.db.update_session(self._to_db_session(session))
             
             # Emit signal
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -298,7 +316,8 @@ class SessionService(QObject):
                 k: v for k, v in info_dict.items() if k not in ("device_model", "os_version")
             }
 
-            await self.db.update_session(session)
+            # Persist using Pydantic DB model mapping
+            await self.db.update_session(self._to_db_session(session))
 
             # Emit a synthetic event indicating info retrieval
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -330,7 +349,7 @@ class SessionService(QObject):
         """Save all sessions to database"""
         try:
             for session in self.active_sessions.values():
-                await self.db.update_session(session)
+                await self.db.update_session(self._to_db_session(session))
             
             self.logger.info("All sessions saved to database")
             
