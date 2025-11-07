@@ -132,3 +132,25 @@
 2025-11-07 14:38:26,353 - core.application - INFO - __init__:63 - {"event": "NetworkSwitch AI Assistant initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T12:38:26.353420Z"}
 2025-11-07 14:39:14,614 - core.application - INFO - closeEvent:269 - {"event": "Application closing...", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T12:39:14.614504Z"}
 2025-11-07 14:39:14,616 - core.application - INFO - closeEvent:279 - {"event": "Application closed successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T12:39:14.616378Z"}
+2025-11-07 15:33:46,701 - utils.logging - INFO - setup_logging:74 - {"log_file": "logs/app.log", "log_level": "INFO", "event": "Logging system initialized", "logger": "utils.logging", "level": "info", "timestamp": "2025-11-07T13:33:46.701836Z"}
+2025-11-07 15:33:46,747 - database_service - ERROR - initialize:70 - {"event": "Failed to initialize database: No module named 'aiosqlite'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T13:33:46.747187Z"}
+2025-11-07 15:33:46,753 - session_service - INFO - __init__:41 - {"event": "Session service initialized", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T13:33:46.753560Z"}
+2025-11-07 15:33:46,753 - core.application - INFO - _initialize_services:80 - {"event": "All services initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:33:46.753886Z"}
+2025-11-07 15:33:46,774 - session_manager - INFO - __init__:56 - {"event": "Session manager initialized", "logger": "session_manager", "level": "info", "timestamp": "2025-11-07T13:33:46.773827Z"}
+2025-11-07 15:33:46,782 - terminal_widget - INFO - __init__:49 - {"event": "Terminal widget initialized", "logger": "terminal_widget", "level": "info", "timestamp": "2025-11-07T13:33:46.782411Z"}
+2025-11-07 15:33:46,788 - chat_widget - INFO - __init__:130 - {"event": "Chat widget initialized", "logger": "chat_widget", "level": "info", "timestamp": "2025-11-07T13:33:46.788922Z"}
+2025-11-07 15:33:46,803 - status_bar - INFO - __init__:53 - {"event": "Status bar initialized", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T13:33:46.803240Z"}
+2025-11-07 15:33:46,805 - main_window - INFO - __init__:64 - {"event": "Main window initialized", "logger": "main_window", "level": "info", "timestamp": "2025-11-07T13:33:46.804967Z"}
+2025-11-07 15:33:46,820 - core.application - INFO - __init__:63 - {"event": "NetworkSwitch AI Assistant initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:33:46.820023Z"}
+2025-11-07 15:40:15,920 - utils.logging - INFO - setup_logging:74 - {"log_file": "logs/app.log", "log_level": "INFO", "event": "Logging system initialized", "logger": "utils.logging", "level": "info", "timestamp": "2025-11-07T13:40:15.920280Z"}
+2025-11-07 15:40:15,997 - database_service - ERROR - initialize:70 - {"event": "Failed to initialize database: No module named 'aiosqlite'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T13:40:15.997174Z"}
+2025-11-07 15:40:16,008 - session_service - INFO - __init__:41 - {"event": "Session service initialized", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T13:40:16.008879Z"}
+2025-11-07 15:40:16,009 - core.application - INFO - _initialize_services:80 - {"event": "All services initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:40:16.009268Z"}
+2025-11-07 15:40:16,054 - session_manager - INFO - __init__:56 - {"event": "Session manager initialized", "logger": "session_manager", "level": "info", "timestamp": "2025-11-07T13:40:16.054499Z"}
+2025-11-07 15:40:16,066 - terminal_widget - INFO - __init__:49 - {"event": "Terminal widget initialized", "logger": "terminal_widget", "level": "info", "timestamp": "2025-11-07T13:40:16.066234Z"}
+2025-11-07 15:40:16,074 - chat_widget - INFO - __init__:130 - {"event": "Chat widget initialized", "logger": "chat_widget", "level": "info", "timestamp": "2025-11-07T13:40:16.074203Z"}
+2025-11-07 15:40:16,091 - status_bar - INFO - __init__:53 - {"event": "Status bar initialized", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T13:40:16.091683Z"}
+2025-11-07 15:40:16,095 - main_window - INFO - __init__:64 - {"event": "Main window initialized", "logger": "main_window", "level": "info", "timestamp": "2025-11-07T13:40:16.095477Z"}
+2025-11-07 15:40:16,108 - core.application - INFO - __init__:63 - {"event": "NetworkSwitch AI Assistant initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:40:16.108523Z"}
+2025-11-07 15:40:51,175 - core.application - INFO - closeEvent:269 - {"event": "Application closing...", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:40:51.175688Z"}
+2025-11-07 15:40:51,178 - core.application - INFO - closeEvent:279 - {"event": "Application closed successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:40:51.178388Z"}

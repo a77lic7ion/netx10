@@ -16,6 +16,7 @@ class VendorType(str, Enum):
 
 class SessionStatus(str, Enum):
     """Session connection statuses"""
+    CREATED = "created"
     DISCONNECTED = "disconnected"
     CONNECTING = "connecting"
     CONNECTED = "connected"

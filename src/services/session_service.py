@@ -27,15 +27,15 @@ class SessionService(QObject):
     command_executed = Signal(str, str, str, str)  # session_id, command, output, timestamp
     session_error = Signal(str, str, str)  # session_id, error_type, error_message
     
-    def __init__(self, db: DatabaseService, config: AppConfig):
+    def __init__(self, db: DatabaseService, serial_service: SerialService, config: AppConfig):
         super().__init__()
         self.db = db
+        self.serial_service = serial_service
         self.config = config
         self.logger = get_logger("session_service")
         
         # Active sessions
         self.active_sessions: Dict[str, Session] = {}
-        self.serial_service: Optional[SerialService] = None
         self.vendor_factory = VendorFactory()
         
         self.logger.info("Session service initialized")
@@ -45,23 +45,14 @@ class SessionService(QObject):
         try:
             session_id = str(uuid.uuid4())
             
-            # Create device info
-            device_info = DeviceInfo(
-                vendor_type=VendorType(vendor_type),
-                model="Unknown",
-                firmware_version="Unknown",
-                serial_number="Unknown"
-            )
-            
             # Create session
             session = Session(
                 session_id=session_id,
-                device_info=device_info,
                 com_port=com_port,
                 baud_rate=baud_rate,
+                vendor_type=vendor_type,
+                start_time=datetime.utcnow(),
                 status=SessionStatus.CREATED,
-                created_at=datetime.now(),
-                commands=[]
             )
             
             # Store session
@@ -86,12 +77,10 @@ class SessionService(QObject):
             if not session:
                 raise ValueError(f"Session not found: {session_id}")
             
-            # Initialize serial service if not already done
-            if not self.serial_service:
-                self.serial_service = SerialService(self.config.serial)
+
             
             # Connect to device
-            success = await self.serial_service.connect(session.com_port, session.baud_rate)
+            success = await self.serial_service.connect_port(port=session.com_port, vendor_type=session.vendor_type)
             
             if success:
                 session.status = SessionStatus.CONNECTED
@@ -135,7 +124,7 @@ class SessionService(QObject):
             
             # Disconnect from device
             if self.serial_service:
-                await self.serial_service.disconnect(session.com_port)
+                await self.serial_service.disconnect_port(session.com_port)
             
             # Update session status
             session.status = SessionStatus.DISCONNECTED

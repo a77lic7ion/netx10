@@ -5,8 +5,8 @@ Device and Session Models
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, validator
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, Text, JSON
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, String, Integer, DateTime, Boolean, Text, JSON, ForeignKey
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 
 Base = declarative_base()
@@ -39,7 +39,7 @@ class CommandHistoryModel(Base):
     __tablename__ = "command_history"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    session_id = Column(String, nullable=False, index=True)
+    session_id = Column(String, ForeignKey("sessions.session_id"), nullable=False, index=True)
     vendor_type = Column(String, nullable=False, index=True)
     command_text = Column(Text, nullable=False)
     command_type = Column(String, default="manual", index=True)
@@ -121,7 +121,7 @@ class Session(BaseModel):
     vendor_specific_data: Optional[Dict[str, Any]] = None
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class CommandResult(BaseModel):
@@ -168,7 +168,7 @@ class VendorTemplate(BaseModel):
     parameters: Optional[Dict[str, Any]] = None
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class CrossVendorMapping(BaseModel):
@@ -181,7 +181,7 @@ class CrossVendorMapping(BaseModel):
     description: Optional[str] = None
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ConnectionConfig(BaseModel):
@@ -233,4 +233,4 @@ class DeviceCapabilities(BaseModel):
     supported_protocols: List[str] = Field(default_factory=list)
     
     class Config:
-        orm_mode = True
+        from_attributes = True

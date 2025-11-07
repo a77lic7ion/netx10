@@ -69,12 +69,13 @@ class NetworkSwitchAIApp(QMainWindow):
             self.db = DatabaseService(self.config)
             # Run async initialization
             loop = asyncio.get_event_loop()
-            loop.run_until_complete(self.db.initialize())
+            if not loop.run_until_complete(self.db.initialize()):
+                logger.error("Failed to initialize the database. Exiting.")
+                sys.exit(1)
             
-            # Core services
-            self.session_service = SessionService(self.db, self.config)
-            self.ai_service = AIService(self.config.ai)
             self.serial_service = SerialService(self.config.serial)
+            self.session_service = SessionService(self.db, self.serial_service, self.config)
+            self.ai_service = AIService(self.config.ai)
             
             self._services_initialized = True
             logger.info("All services initialized successfully")
@@ -357,6 +358,13 @@ class NetworkSwitchAIApp(QMainWindow):
         # This would be implemented based on your session service
         pass
     
+    @property
+    def active_sessions(self) -> Dict[str, Any]:
+        """Get active sessions from session service"""
+        if self._services_initialized:
+            return self.session_service.active_sessions
+        return {}
+
     def get_application_state(self):
         """Get current application state"""
         return {

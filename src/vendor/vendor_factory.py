@@ -6,6 +6,7 @@ from typing import Dict, Type, Optional
 from core.constants import VendorType
 from vendor.base_vendor import BaseVendor
 from vendor.cisco_vendor import CiscoVendor
+from vendor.generic_vendor import GenericVendor
 
 
 class VendorFactory:
@@ -13,9 +14,9 @@ class VendorFactory:
     
     _vendors: Dict[VendorType, Type[BaseVendor]] = {
         VendorType.CISCO: CiscoVendor,
-        # VendorType.H3C: H3CVendor,  # To be implemented
-        # VendorType.JUNIPER: JuniperVendor,  # To be implemented
-        # VendorType.HUAWEI: HuaweiVendor,  # To be implemented
+        VendorType.H3C: lambda: GenericVendor(VendorType.H3C),
+        VendorType.JUNIPER: lambda: GenericVendor(VendorType.JUNIPER),
+        VendorType.HUAWEI: lambda: GenericVendor(VendorType.HUAWEI),
     }
     
     @classmethod
@@ -23,7 +24,12 @@ class VendorFactory:
         """Create a vendor instance"""
         vendor_class = cls._vendors.get(vendor_type)
         if vendor_class:
-            return vendor_class()
+            # some registered entries may be classes or callables returning instances
+            try:
+                return vendor_class()  # if it's a class
+            except TypeError:
+                # Not a class; assume callable that returns an instance
+                return vendor_class()
         return None
     
     @classmethod

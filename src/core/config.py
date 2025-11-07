@@ -21,12 +21,21 @@ class AIConfig(BaseSettings):
     model_name: str = Field(default="gpt-3.5-turbo", env="AI_MODEL_NAME")
     max_tokens: int = Field(default=1000, env="AI_MAX_TOKENS")
     temperature: float = Field(default=0.1, env="AI_TEMPERATURE")
+    # Optional Ollama / LLM settings (used by ai_service)
+    ollama_url: Optional[str] = Field(default=None, env="OLLAMA_URL")
+    top_p: float = Field(default=1.0, env="AI_TOP_P")
+    timeout: int = Field(default=30, env="AI_TIMEOUT")
 
 
 class SerialConfig(BaseSettings):
     """Serial communication configuration"""
-    default_baud_rate: int = Field(default=9600, env="DEFAULT_BAUD_RATE")
-    default_timeout: float = Field(default=10.0, env="DEFAULT_TIMEOUT")
+    # Common serial parameters used by SerialService/SerialConnection
+    baud_rate: int = Field(default=9600, env="DEFAULT_BAUD_RATE")
+    data_bits: int = Field(default=8, env="SERIAL_DATA_BITS")
+    parity: str = Field(default="N", env="SERIAL_PARITY")
+    stop_bits: float = Field(default=1, env="SERIAL_STOP_BITS")
+    timeout: float = Field(default=10.0, env="DEFAULT_TIMEOUT")
+    write_timeout: float = Field(default=2.0, env="SERIAL_WRITE_TIMEOUT")
     max_retry_attempts: int = Field(default=3, env="MAX_RETRY_ATTEMPTS")
 
 

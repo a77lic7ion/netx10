@@ -18,10 +18,11 @@ from utils.logging import get_logger
 
 class SerialConnection:
     """Serial connection wrapper with enhanced features"""
-    
-    def __init__(self, port: str, config: AppConfig):
+
+    def __init__(self, port: str, serial_config):
         self.port = port
-        self.config = config
+        # serial_config is expected to be SerialConfig (from core.config)
+        self.config = serial_config
         self.logger = get_logger(f"serial_connection_{port}")
         
         self.serial: Optional[serial_asyncio.SerialTransport] = None
@@ -32,14 +33,14 @@ class SerialConnection:
         self.is_connecting = False
         self.connection_start_time: Optional[datetime] = None
         
-        # Connection settings
-        self.baud_rate = config.serial.baud_rate
-        self.data_bits = config.serial.data_bits
-        self.parity = config.serial.parity
-        self.stop_bits = config.serial.stop_bits
-        self.timeout = config.serial.timeout
-        self.write_timeout = config.serial.write_timeout
-        
+        # Connection settings (read directly from SerialConfig passed in)
+        self.baud_rate = getattr(self.config, "baud_rate", 9600)
+        self.data_bits = getattr(self.config, "data_bits", 8)
+        self.parity = getattr(self.config, "parity", "N")
+        self.stop_bits = getattr(self.config, "stop_bits", 1)
+        self.timeout = getattr(self.config, "timeout", 10.0)
+        self.write_timeout = getattr(self.config, "write_timeout", 2.0)
+
         # Vendor-specific settings
         self.vendor_type: Optional[str] = None
         self.prompt_pattern: Optional[str] = None
@@ -344,9 +345,10 @@ class SerialConnection:
 
 class SerialService:
     """Serial communication service for managing multiple connections"""
-    
-    def __init__(self, config: AppConfig):
-        self.config = config
+
+    def __init__(self, serial_config):
+        # serial_config is expected to be core.config.SerialConfig
+        self.config = serial_config
         self.logger = get_logger("serial_service")
         
         self.connections: Dict[str, SerialConnection] = {}
@@ -477,6 +479,10 @@ class SerialService:
             port: connection.get_statistics()
             for port, connection in self.connections.items()
         }
+    
+    def is_any_connection_active(self) -> bool:
+        """Check if any serial connection is active."""
+        return any(conn.is_connected for conn in self.connections.values())
     
     def add_connection_listener(self, callback: Callable[[str, bool], None]):
         """Add connection status change listener"""

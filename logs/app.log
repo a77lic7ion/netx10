@@ -1,36 +1,63 @@
-2025-11-07 14:35:49,060 - utils.logging - INFO - setup_logging:74 - {"log_file": "logs/app.log", "log_level": "INFO", "event": "Logging system initialized", "logger": "utils.logging", "level": "info", "timestamp": "2025-11-07T12:35:49.060305Z"}
-2025-11-07 14:35:49,098 - database_service - ERROR - initialize:67 - {"event": "Failed to initialize database: The asyncio extension requires an async driver to be used. The loaded 'pysqlite' is not async.", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T12:35:49.098028Z"}
-2025-11-07 14:35:49,115 - session_service - INFO - __init__:41 - {"event": "Session service initialized", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T12:35:49.115338Z"}
-2025-11-07 14:35:49,118 - core.application - INFO - _initialize_services:78 - {"event": "All services initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T12:35:49.118705Z"}
-2025-11-07 14:35:49,136 - session_manager - INFO - __init__:56 - {"event": "Session manager initialized", "logger": "session_manager", "level": "info", "timestamp": "2025-11-07T12:35:49.136741Z"}
-2025-11-07 14:35:49,148 - terminal_widget - INFO - __init__:49 - {"event": "Terminal widget initialized", "logger": "terminal_widget", "level": "info", "timestamp": "2025-11-07T12:35:49.148361Z"}
-2025-11-07 14:35:49,157 - chat_widget - INFO - __init__:130 - {"event": "Chat widget initialized", "logger": "chat_widget", "level": "info", "timestamp": "2025-11-07T12:35:49.157302Z"}
-2025-11-07 14:35:49,171 - status_bar - INFO - __init__:53 - {"event": "Status bar initialized", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T12:35:49.171237Z"}
-2025-11-07 14:35:49,174 - main_window - INFO - __init__:64 - {"event": "Main window initialized", "logger": "main_window", "level": "info", "timestamp": "2025-11-07T12:35:49.174769Z"}
-2025-11-07 14:35:49,194 - core.application - INFO - __init__:61 - {"event": "NetworkSwitch AI Assistant initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T12:35:49.194918Z"}
-2025-11-07 14:36:04,522 - core.application - INFO - closeEvent:267 - {"event": "Application closing...", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T12:36:04.521990Z"}
-2025-11-07 14:36:04,523 - core.application - INFO - closeEvent:277 - {"event": "Application closed successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T12:36:04.523934Z"}
-2025-11-07 15:13:36,983 - utils.logging - INFO - setup_logging:74 - {"log_file": "logs/app.log", "log_level": "INFO", "event": "Logging system initialized", "logger": "utils.logging", "level": "info", "timestamp": "2025-11-07T13:13:36.983133Z"}
-2025-11-07 15:13:37,094 - database_service - ERROR - initialize:70 - {"event": "Failed to initialize database: No module named 'aiosqlite'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T13:13:37.094438Z"}
-2025-11-07 15:13:37,114 - session_service - INFO - __init__:41 - {"event": "Session service initialized", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T13:13:37.114398Z"}
-2025-11-07 15:13:37,115 - core.application - INFO - _initialize_services:80 - {"event": "All services initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:13:37.115337Z"}
-2025-11-07 15:13:37,167 - session_manager - INFO - __init__:56 - {"event": "Session manager initialized", "logger": "session_manager", "level": "info", "timestamp": "2025-11-07T13:13:37.167333Z"}
-2025-11-07 15:13:37,187 - terminal_widget - INFO - __init__:49 - {"event": "Terminal widget initialized", "logger": "terminal_widget", "level": "info", "timestamp": "2025-11-07T13:13:37.187550Z"}
-2025-11-07 15:13:37,195 - chat_widget - INFO - __init__:130 - {"event": "Chat widget initialized", "logger": "chat_widget", "level": "info", "timestamp": "2025-11-07T13:13:37.195012Z"}
-2025-11-07 15:13:37,215 - status_bar - INFO - __init__:53 - {"event": "Status bar initialized", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T13:13:37.215421Z"}
-2025-11-07 15:13:37,218 - main_window - INFO - __init__:64 - {"event": "Main window initialized", "logger": "main_window", "level": "info", "timestamp": "2025-11-07T13:13:37.218796Z"}
-2025-11-07 15:13:37,233 - core.application - INFO - __init__:63 - {"event": "NetworkSwitch AI Assistant initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:13:37.233007Z"}
-2025-11-07 15:15:14,995 - core.application - INFO - closeEvent:269 - {"event": "Application closing...", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:15:14.995047Z"}
-2025-11-07 15:15:14,998 - core.application - INFO - closeEvent:279 - {"event": "Application closed successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:15:14.997999Z"}
-2025-11-07 15:15:32,481 - utils.logging - INFO - setup_logging:74 - {"log_file": "logs/app.log", "log_level": "INFO", "event": "Logging system initialized", "logger": "utils.logging", "level": "info", "timestamp": "2025-11-07T13:15:32.481109Z"}
-2025-11-07 15:15:32,519 - database_service - ERROR - initialize:70 - {"event": "Failed to initialize database: No module named 'aiosqlite'", "logger": "database_service", "level": "error", "timestamp": "2025-11-07T13:15:32.519515Z"}
-2025-11-07 15:15:32,521 - session_service - INFO - __init__:41 - {"event": "Session service initialized", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T13:15:32.521779Z"}
-2025-11-07 15:15:32,522 - core.application - INFO - _initialize_services:80 - {"event": "All services initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:15:32.522087Z"}
-2025-11-07 15:15:32,555 - session_manager - INFO - __init__:56 - {"event": "Session manager initialized", "logger": "session_manager", "level": "info", "timestamp": "2025-11-07T13:15:32.554809Z"}
-2025-11-07 15:15:32,565 - terminal_widget - INFO - __init__:49 - {"event": "Terminal widget initialized", "logger": "terminal_widget", "level": "info", "timestamp": "2025-11-07T13:15:32.565744Z"}
-2025-11-07 15:15:32,572 - chat_widget - INFO - __init__:130 - {"event": "Chat widget initialized", "logger": "chat_widget", "level": "info", "timestamp": "2025-11-07T13:15:32.572076Z"}
-2025-11-07 15:15:32,581 - status_bar - INFO - __init__:53 - {"event": "Status bar initialized", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T13:15:32.581315Z"}
-2025-11-07 15:15:32,584 - main_window - INFO - __init__:64 - {"event": "Main window initialized", "logger": "main_window", "level": "info", "timestamp": "2025-11-07T13:15:32.583968Z"}
-2025-11-07 15:15:32,595 - core.application - INFO - __init__:63 - {"event": "NetworkSwitch AI Assistant initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:15:32.595915Z"}
-2025-11-07 15:16:25,227 - core.application - INFO - closeEvent:269 - {"event": "Application closing...", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:16:25.227422Z"}
-2025-11-07 15:16:25,228 - core.application - INFO - closeEvent:279 - {"event": "Application closed successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T13:16:25.228947Z"}
+2025-11-07 16:50:31,823 - utils.logging - INFO - setup_logging:74 - {"log_file": "logs/app.log", "log_level": "INFO", "event": "Logging system initialized", "logger": "utils.logging", "level": "info", "timestamp": "2025-11-07T14:50:31.823105Z"}
+2025-11-07 16:50:31,866 - database_service - INFO - initialize:62 - {"event": "Database initialized at sqlite:///network_switch_ai.db", "logger": "database_service", "level": "info", "timestamp": "2025-11-07T14:50:31.866235Z"}
+2025-11-07 16:50:31,876 - session_service - INFO - __init__:41 - {"event": "Session service initialized", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T14:50:31.876378Z"}
+2025-11-07 16:50:31,876 - core.application - INFO - _initialize_services:81 - {"event": "All services initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T14:50:31.876799Z"}
+2025-11-07 16:50:31,917 - session_manager - INFO - __init__:56 - {"event": "Session manager initialized", "logger": "session_manager", "level": "info", "timestamp": "2025-11-07T14:50:31.917657Z"}
+2025-11-07 16:50:31,927 - terminal_widget - INFO - __init__:49 - {"event": "Terminal widget initialized", "logger": "terminal_widget", "level": "info", "timestamp": "2025-11-07T14:50:31.927061Z"}
+2025-11-07 16:50:31,933 - chat_widget - INFO - __init__:130 - {"event": "Chat widget initialized", "logger": "chat_widget", "level": "info", "timestamp": "2025-11-07T14:50:31.933615Z"}
+2025-11-07 16:50:31,942 - status_bar - INFO - __init__:53 - {"event": "Status bar initialized", "logger": "status_bar", "level": "info", "timestamp": "2025-11-07T14:50:31.942000Z"}
+2025-11-07 16:50:31,944 - main_window - INFO - __init__:64 - {"event": "Main window initialized", "logger": "main_window", "level": "info", "timestamp": "2025-11-07T14:50:31.944454Z"}
+2025-11-07 16:50:31,956 - core.application - INFO - __init__:63 - {"event": "NetworkSwitch AI Assistant initialized successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T14:50:31.956152Z"}
+2025-11-07 16:50:39,812 - core.application - INFO - _connect_device:161 - {"event": "Connecting to COM7 (h3c) at 9600 baud", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T14:50:39.812518Z"}
+2025-11-07 16:50:39,825 - session_service - INFO - create_session:64 - {"event": "Session created: e82b71dd-afd6-403b-b1f0-043218fb3980", "logger": "session_service", "level": "info", "timestamp": "2025-11-07T14:50:39.825660Z"}
+2025-11-07 16:50:39,826 - serial_connection_COM7 - INFO - connect:67 - {"event": "Connecting to COM7 at 9600 baud", "logger": "serial_connection_COM7", "level": "info", "timestamp": "2025-11-07T14:50:39.826001Z"}
+2025-11-07 16:50:39,826 - serial_connection_COM7 - INFO - _apply_vendor_settings:136 - {"event": "Applied vendor settings for h3c", "logger": "serial_connection_COM7", "level": "info", "timestamp": "2025-11-07T14:50:39.826208Z"}
+2025-11-07 16:50:39,885 - serial_connection_COM7 - INFO - connect:92 - {"event": "Successfully connected to COM7", "logger": "serial_connection_COM7", "level": "info", "timestamp": "2025-11-07T14:50:39.885795Z"}
+2025-11-07 16:50:39,886 - serial_service - INFO - connect_port:430 - {"event": "Connected to port COM7", "logger": "serial_service", "level": "info", "timestamp": "2025-11-07T14:50:39.886719Z"}
+2025-11-07 16:50:39,887 - session_service - ERROR - connect_session:107 - {"event": "Connection error for session e82b71dd-afd6-403b-b1f0-043218fb3980: \"Session\" object has no field \"connected_at\"", "logger": "session_service", "level": "error", "timestamp": "2025-11-07T14:50:39.887050Z"}
+2025-11-07 16:50:39,887 - core.application - ERROR - _connect_device:183 - {"event": "Connection error: \"Session\" object has no field \"error_message\"", "logger": "core.application", "level": "error", "timestamp": "2025-11-07T14:50:39.887288Z"}
+2025-11-07 16:50:39,892 - status_bar - ERROR - on_error_occurred:195 - {"event": "Error occurred: Connection Error - \"Session\" object has no field \"error_message\"", "logger": "status_bar", "level": "error", "timestamp": "2025-11-07T14:50:39.892842Z"}
+2025-11-07 16:50:39,893 - main_window - ERROR - on_error_occurred:480 - {"event": "Error occurred: Connection Error - \"Session\" object has no field \"error_message\"", "logger": "main_window", "level": "error", "timestamp": "2025-11-07T14:50:39.893306Z"}
+2025-11-07 16:50:39,913 - qasync._QEventLoop - ERROR - __log_error:770 - Exception in callback <_asyncio.TaskStepMethWrapper object at 0x00000191587C4190>()
+handle: <Handle <_asyncio.TaskStepMethWrapper object at 0x00000191587C4190>()>
+Traceback (most recent call last):
+  File "d:\GitHub\netx10\src\services\session_service.py", line 87, in connect_session
+    session.connected_at = datetime.now()
+    ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\site-packages\pydantic\main.py", line 1032, in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+                             ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Python313\Lib\site-packages\pydantic\main.py", line 1079, in _setattr_handler
+    raise ValueError(f'"{cls.__name__}" object has no field "{name}"')
+ValueError: "Session" object has no field "connected_at"
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "d:\GitHub\netx10\src\core\application.py", line 173, in _connect_device
+    success = await self.session_service.connect_session(session.session_id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "d:\GitHub\netx10\src\services\session_service.py", line 112, in connect_session
+    session.error_message = str(e)
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python313\Lib\site-packages\pydantic\main.py", line 1032, in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+                             ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Python313\Lib\site-packages\pydantic\main.py", line 1079, in _setattr_handler
+    raise ValueError(f'"{cls.__name__}" object has no field "{name}"')
+ValueError: "Session" object has no field "error_message"
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task pending name='Task-6' coro=<SerialConnection._read_loop() running at d:\GitHub\netx10\src\services\serial_service.py:169>> while another task <Task pending name='Task-4' coro=<NetworkSwitchAIApp._connect_device() running at d:\GitHub\netx10\src\core\application.py:184>> is being executed.
+2025-11-07 16:50:42,119 - main_window - ERROR - on_error_occurred:480 - {"event": "Error occurred: Connection Error - \"Session\" object has no field \"error_message\"", "logger": "main_window", "level": "error", "timestamp": "2025-11-07T14:50:42.119317Z"}
+2025-11-07 16:50:47,080 - core.application - INFO - closeEvent:270 - {"event": "Application closing...", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T14:50:47.080471Z"}
+2025-11-07 16:50:47,082 - core.application - INFO - closeEvent:280 - {"event": "Application closed successfully", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T14:50:47.082398Z"}
+2025-11-07 16:50:47,092 - core.application - INFO - _disconnect_device:192 - {"event": "Disconnecting from session e82b71dd-afd6-403b-b1f0-043218fb3980", "logger": "core.application", "level": "info", "timestamp": "2025-11-07T14:50:47.092318Z"}
+2025-11-07 16:50:47,093 - serial_connection_COM7 - INFO - disconnect:307 - {"event": "Disconnecting from COM7", "logger": "serial_connection_COM7", "level": "info", "timestamp": "2025-11-07T14:50:47.092978Z"}
+2025-11-07 16:50:47,227 - qasync._QEventLoop - ERROR - __log_error:770 - Task was destroyed but it is pending!
+task: <Task pending name='Task-6' coro=<SerialConnection._read_loop() running at d:\GitHub\netx10\src\services\serial_service.py:169>>

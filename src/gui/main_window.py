@@ -607,9 +607,7 @@ class MainWindow(QMainWindow):
         uptime = datetime.utcnow() - self.app.start_time
         system_info = f"""
 Uptime: {str(uptime).split('.')[0]}
-Sessions: {len(self.app.active_sessions)}
-Commands Processed: {self.app.command_count}
-AI Queries: {self.app.ai_query_count}
+Sessions: {len(self.app.session_service.active_sessions)}
         """.strip()
         
         if hasattr(self, 'system_info_text'):

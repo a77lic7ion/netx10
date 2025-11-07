@@ -35,10 +35,6 @@ def main():
     # Set application style
     app.setStyle("Fusion")
     
-    # Enable high DPI scaling
-    app.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    app.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-    
     # Create event loop
     loop = QEventLoop(app)
     asyncio.set_event_loop(loop)
@@ -54,4 +50,6 @@ def main():
 
 
 if __name__ == "__main__":
+
+
     main()

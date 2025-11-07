@@ -139,18 +139,16 @@ class StatusBarWidget(QWidget):
         self.app.command_executed.connect(self.on_command_executed)
         self.app.error_occurred.connect(self.on_error_occurred)
     
-    @Slot(str, str)
-    def on_connection_status_changed(self, status: str, details: str):
+    @Slot(str, bool)
+    def on_connection_status_changed(self, status: str, connected: bool):
         """Handle connection status changed"""
         self.connection_status = status
         self.update_connection_status_display()
         
-        if status == "Connected":
-            self.logger.info(f"Connection established: {details}")
-        elif status == "Disconnected":
-            self.logger.info(f"Connection terminated: {details}")
-        elif status == "Error":
-            self.logger.error(f"Connection error: {details}")
+        if connected:
+            self.logger.info(f"Connection established: {status}")
+        else:
+            self.logger.info(f"Connection status: {status}")
     
     @Slot(str, str)
     def on_ai_status_changed(self, status: str, details: str):
@@ -283,6 +281,11 @@ class StatusBarWidget(QWidget):
     def update_command_count_display(self):
         """Update command count display"""
         self.command_count_label.setText(f"Commands: {self.total_commands}")
+
+    def set_connection_status(self, status: str):
+        """Set connection status and update display."""
+        self.connection_status = status
+        self.update_connection_status_display()
     
     @Slot()
     def show_last_error(self):

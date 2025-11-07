@@ -224,27 +224,50 @@ class DatabaseService:
                 raise
     
     # Session Management
-    async def create_session(self, session_data: Session) -> bool:
-        """Create a new session"""
+    async def save_session(self, session_data: Session) -> bool:
+        """Create or update a session"""
         try:
             async with self.get_session() as db_session:
-                session_model = SessionModel(
-                    session_id=session_data.session_id,
-                    device_name=session_data.device_name,
-                    com_port=session_data.com_port,
-                    baud_rate=session_data.baud_rate,
-                    vendor_type=session_data.vendor_type,
-                    device_model=session_data.device_model,
-                    os_version=session_data.os_version,
-                    start_time=session_data.start_time,
-                    status=session_data.status,
-                    vendor_specific_data=session_data.vendor_specific_data
+                result = await db_session.execute(
+                    select(SessionModel).where(SessionModel.session_id == session_data.session_id)
                 )
-                db_session.add(session_model)
+                session_model = result.scalar_one_or_none()
+
+                if session_model:
+                    # Update existing session
+                    session_model.device_name = session_data.device_name
+                    session_model.com_port = session_data.com_port
+                    session_model.baud_rate = session_data.baud_rate
+                    session_model.vendor_type = session_data.vendor_type
+                    session_model.device_model = session_data.device_model
+                    session_model.os_version = session_data.os_version
+                    session_model.start_time = session_data.start_time
+                    session_model.end_time = session_data.end_time
+                    session_model.status = session_data.status
+                    session_model.vendor_specific_data = session_data.vendor_specific_data
+                else:
+                    # Create new session
+                    session_model = SessionModel(
+                        session_id=session_data.session_id,
+                        device_name=session_data.device_name,
+                        com_port=session_data.com_port,
+                        baud_rate=session_data.baud_rate,
+                        vendor_type=session_data.vendor_type,
+                        device_model=session_data.device_model,
+                        os_version=session_data.os_version,
+                        start_time=session_data.start_time,
+                        status=session_data.status,
+                        vendor_specific_data=session_data.vendor_specific_data
+                    )
+                    db_session.add(session_model)
                 return True
         except Exception as e:
-            self.logger.error(f"Failed to create session: {e}")
+            self.logger.error(f"Failed to save session: {e}")
             return False
+
+    async def update_session(self, session_data: Session) -> bool:
+        """Update an existing session"""
+        return await self.save_session(session_data)
     
     async def get_session_by_id(self, session_id: str) -> Optional[Session]:
         """Get session by ID"""
@@ -511,6 +534,5 @@ class DatabaseService:
             self.logger.error(f"Error closing database connection: {e}")
 
 
-# Import Base from models
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
+# Use Base declared in models.device_models so all table metadata is shared
+from models.device_models import Base
