@@ -449,7 +449,9 @@ class SerialService:
             connection = SerialConnection(port, self.config)
             
             # Set up connection event handlers
-            connection.response_callback = self._on_connection_data
+            # Forward raw bytes immediately to UI to ensure terminal displays streaming output
+            connection.data_callback = self._on_connection_bytes
+            # Do NOT set a default response_callback here; send_command will manage it temporarily
             
             # Attempt connection
             success = await connection.connect(vendor_type)
@@ -541,6 +543,15 @@ class SerialService:
                 self.data_listener(data)
             except Exception as e:
                 self.logger.error(f"Error in data listener: {e}")
+
+    def _on_connection_bytes(self, data: bytes):
+        """Handle raw bytes from connection and forward as text."""
+        try:
+            text = data.decode('utf-8', errors='ignore')
+        except Exception:
+            text = str(data)
+        # Reuse the string handler to keep logging and forwarding consistent
+        self._on_connection_data(text)
     
     async def _connection_monitor(self):
         """Monitor connections and handle reconnections"""

@@ -15,6 +15,17 @@ try:
     from langchain.memory import ConversationBufferMemory
     from langchain.schema import BaseMessage, HumanMessage, AIMessage
     from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+    from langchain_openai import ChatOpenAI
+    # Optional providers (loaded if installed)
+    try:
+        from langchain_anthropic import ChatAnthropic  # type: ignore
+    except Exception:
+        ChatAnthropic = None  # type: ignore
+    try:
+        from langchain_google_genai import ChatGoogleGenerativeAI  # type: ignore
+    except Exception:
+        ChatGoogleGenerativeAI = None  # type: ignore
+
     _HAS_LANGCHAIN = True
 except Exception:
     # LangChain / Ollama not available in test environments — provide fallbacks
@@ -38,7 +49,7 @@ except Exception:
             # Very small deterministic response for tests / offline use
             return f"[mock-llm] Received prompt: {prompt[:200]}"
 
-from core.config import AppConfig
+from core.config import AppConfig, AIConfig, ProviderConfig
 from core.constants import AIPromptType, VENDOR_AI_PROMPTS, AI_SYSTEM_PROMPTS
 from models.device_models import AIQuery, AIResponse
 from utils.logging import get_logger
@@ -66,7 +77,7 @@ class AIStreamingCallbackHandler(StreamingStdOutCallbackHandler):
 class AIService:
     """AI Service for network switch assistance using LangChain (or a mock fallback)."""
 
-    def __init__(self, ai_config):
+    def __init__(self, ai_config: AIConfig):
         # ai_config is expected to be AppConfig.ai (AIConfig) or similar
         self.ai_config = ai_config
         self.logger = get_logger("ai_service")
@@ -86,16 +97,16 @@ class AIService:
         try:
             # Initialize LLM (Ollama if available, otherwise mock)
             if _HAS_LANGCHAIN:
-                self.llm = Ollama(
-                    model=self.ai_config.model_name,
-                    base_url=self.ai_config.ollama_url,
-                    temperature=self.ai_config.temperature,
-                    top_p=self.ai_config.top_p,
-                    timeout=self.ai_config.timeout
-                )
+                provider_name = self.ai_config.default_provider
+                provider_config = self.ai_config.providers.get(provider_name)
 
-                # Test connection to Ollama
-                await self._test_ollama_connection()
+                if not provider_config:
+                    raise ValueError(f"Provider '{provider_name}' not configured.")
+
+                self.llm = self._create_llm_instance(provider_name, provider_config)
+
+                # Test connection to the selected provider
+                await self._test_connection(provider_name)
 
                 # Initialize conversation memory
                 self.memory = ConversationBufferMemory(
@@ -120,8 +131,73 @@ class AIService:
             self.logger.error(f"Failed to initialize AI service: {e}")
             return False
     
-    async def _test_ollama_connection(self):
-        """Test connection to Ollama service"""
+    def _create_llm_instance(self, provider_name: str, config: ProviderConfig) -> Any:
+        """Factory function to create an LLM instance based on provider"""
+        # Prefer provider-specific model override if present
+        model_name = config.model or self.ai_config.model_name
+        if provider_name == "ollama":
+            return Ollama(
+                model=model_name,
+                base_url=str(config.base_url) if config.base_url else None,
+                temperature=self.ai_config.temperature,
+                top_p=self.ai_config.top_p,
+                timeout=config.timeout
+            )
+        elif provider_name == "openai":
+            return ChatOpenAI(
+                model_name=model_name,
+                openai_api_key=config.api_key,
+                openai_api_base=str(config.base_url) if config.base_url else None,
+                temperature=self.ai_config.temperature,
+                max_tokens=self.ai_config.max_tokens,
+                top_p=self.ai_config.top_p,
+                timeout=config.timeout
+            )
+        elif provider_name == "xai":
+            # xAI exposes an OpenAI-compatible API
+            return ChatOpenAI(
+                model_name=model_name,
+                openai_api_key=config.api_key,
+                openai_api_base=str(config.base_url) if config.base_url else "https://api.x.ai/v1",
+                temperature=self.ai_config.temperature,
+                max_tokens=self.ai_config.max_tokens,
+                top_p=self.ai_config.top_p,
+                timeout=config.timeout
+            )
+        elif provider_name == "mistral":
+            # Mistral provides an OpenAI-compatible endpoint as well
+            return ChatOpenAI(
+                model_name=model_name,
+                openai_api_key=config.api_key,
+                openai_api_base=str(config.base_url) if config.base_url else "https://api.mistral.ai/v1",
+                temperature=self.ai_config.temperature,
+                max_tokens=self.ai_config.max_tokens,
+                top_p=self.ai_config.top_p,
+                timeout=config.timeout
+            )
+        elif provider_name == "anthropic":
+            if ChatAnthropic is None:
+                raise ValueError("Anthropic provider requested but langchain-anthropic is not installed.")
+            return ChatAnthropic(
+                model=model_name,
+                api_key=config.api_key,
+                temperature=self.ai_config.temperature,
+                max_tokens=self.ai_config.max_tokens
+            )
+        elif provider_name == "gemini":
+            if ChatGoogleGenerativeAI is None:
+                raise ValueError("Gemini provider requested but langchain-google-genai is not installed.")
+            return ChatGoogleGenerativeAI(
+                model=model_name,
+                google_api_key=config.api_key,
+                temperature=self.ai_config.temperature,
+                max_output_tokens=self.ai_config.max_tokens,
+            )
+        else:
+            raise ValueError(f"Unsupported AI provider: {provider_name}")
+    
+    async def _test_connection(self, provider_name: str):
+        """Test connection to the selected AI service"""
         try:
             # Simple test query
             response = await asyncio.to_thread(
@@ -129,13 +205,15 @@ class AIService:
                 "Hello, this is a test. Please respond with 'AI service online'."
             )
             
-            if "AI service online" in response:
-                self.logger.info("Ollama connection test successful")
+            response_content = response if isinstance(response, str) else response.content
+
+            if "AI service online" in response_content:
+                self.logger.info(f"{provider_name.capitalize()} connection test successful")
             else:
-                self.logger.warning(f"Ollama connection test response: {response}")
+                self.logger.warning(f"{provider_name.capitalize()} connection test response: {response_content}")
                 
         except Exception as e:
-            self.logger.error(f"Ollama connection test failed: {e}")
+            self.logger.error(f"{provider_name.capitalize()} connection test failed: {e}")
             raise
     
     async def _initialize_chains(self):

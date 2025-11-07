@@ -4,8 +4,9 @@ Application Configuration Management
 
 import os
 from pathlib import Path
-from pydantic import Field
-from pydantic_settings import BaseSettings
+from datetime import datetime
+from pydantic import Field, HttpUrl
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional, Dict, Any
 
 
@@ -15,16 +16,54 @@ class DatabaseConfig(BaseSettings):
     echo: bool = Field(default=False, env="DB_ECHO")
 
 
+class ProviderConfig(BaseSettings):
+    """Configuration for a single AI provider"""
+    api_key: Optional[str] = None
+    base_url: Optional[HttpUrl] = None
+    model: Optional[str] = None
+    timeout: int = 30
+
+
 class AIConfig(BaseSettings):
     """AI/ML configuration"""
-    openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
+    default_provider: str = Field(default="openai", env="AI_PROVIDER")
     model_name: str = Field(default="gpt-3.5-turbo", env="AI_MODEL_NAME")
     max_tokens: int = Field(default=1000, env="AI_MAX_TOKENS")
     temperature: float = Field(default=0.1, env="AI_TEMPERATURE")
-    # Optional Ollama / LLM settings (used by ai_service)
-    ollama_url: Optional[str] = Field(default=None, env="OLLAMA_URL")
     top_p: float = Field(default=1.0, env="AI_TOP_P")
-    timeout: int = Field(default=30, env="AI_TIMEOUT")
+
+    # Provider-specific endpoints
+    providers: Dict[str, ProviderConfig] = {
+        "openai": ProviderConfig(
+            base_url="https://api.openai.com/v1",
+            api_key=os.getenv("OPENAI_API_KEY"),
+            model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+        ),
+        "ollama": ProviderConfig(
+            base_url=os.getenv("OLLAMA_URL", "http://localhost:11434"),
+            model=os.getenv("OLLAMA_MODEL", "llama2")
+        ),
+        "anthropic": ProviderConfig(
+            base_url=os.getenv("ANTHROPIC_BASE_URL", "https://api.anthropic.com"),
+            api_key=os.getenv("ANTHROPIC_API_KEY"),
+            model=os.getenv("ANTHROPIC_MODEL", "claude-3-sonnet-20240229")
+        ),
+        "xai": ProviderConfig(
+            base_url=os.getenv("XAI_BASE_URL", "https://api.x.ai/v1"),
+            api_key=os.getenv("XAI_API_KEY"),
+            model=os.getenv("XAI_MODEL", "grok-2-mini")
+        ),
+        "mistral": ProviderConfig(
+            base_url=os.getenv("MISTRAL_BASE_URL", "https://api.mistral.ai/v1"),
+            api_key=os.getenv("MISTRAL_API_KEY"),
+            model=os.getenv("MISTRAL_MODEL", "mistral-small-latest")
+        ),
+        "gemini": ProviderConfig(
+            base_url=os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com"),
+            api_key=os.getenv("GEMINI_API_KEY"),
+            model=os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+        )
+    }
 
 
 class SerialConfig(BaseSettings):
@@ -78,10 +117,13 @@ class AppConfig(BaseSettings):
     log_max_size: int = Field(default=10 * 1024 * 1024, env="LOG_MAX_SIZE")  # 10MB
     log_backup_count: int = Field(default=5, env="LOG_BACKUP_COUNT")
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    # Pydantic v2 settings configuration
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -112,6 +154,60 @@ class AppConfig(BaseSettings):
     def get_vendor_template_path(self, vendor: str) -> Path:
         """Get vendor template directory path"""
         return Path(self.vendor.template_dir) / vendor.lower()
+
+    def save(self, env_path: Optional[str] = None) -> None:
+        """Persist configuration to the .env file, updating AI settings and provider credentials.
+
+        - Merges with existing entries in the env file.
+        - Writes keys for general AI settings and each provider: API_KEY, BASE_URL, MODEL.
+        """
+        # Local import to avoid NameError in environments where module-level imports
+        # may be affected by load order or partial imports
+        from datetime import datetime as _dt
+        env_path = env_path or getattr(self.Config, "env_file", ".env")
+        env_file = Path(env_path)
+
+        # Read existing env entries
+        existing: Dict[str, str] = {}
+        if env_file.exists():
+            for line in env_file.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, value = line.partition("=")
+                existing[key.strip()] = value.strip()
+
+        # Update general AI settings
+        updates: Dict[str, str] = {
+            "AI_PROVIDER": self.ai.default_provider,
+            "AI_MODEL_NAME": str(self.ai.model_name),
+            "AI_MAX_TOKENS": str(self.ai.max_tokens),
+            "AI_TEMPERATURE": str(self.ai.temperature),
+            "AI_TOP_P": str(self.ai.top_p),
+        }
+
+        # Provider-specific settings
+        for name, cfg in self.ai.providers.items():
+            prefix = name.upper()
+            base_url_val = str(cfg.base_url) if cfg.base_url else ""
+            updates[f"{prefix}_API_KEY"] = cfg.api_key or ""
+            updates[f"{prefix}_BASE_URL"] = base_url_val
+            updates[f"{prefix}_MODEL"] = cfg.model or ""
+
+        # Merge and write
+        merged = {**existing, **updates}
+        lines = [
+            "# Auto-generated by NetworkSwitch AI Assistant",
+            f"# Last updated: {_dt.utcnow().isoformat()}Z",
+        ]
+        for key in sorted(merged.keys()):
+            # Quote values containing spaces or special characters
+            val = merged[key]
+            if any(c in val for c in [' ', '#', '\\', '"']):
+                val = '"' + val.replace('"', '\\"') + '"'
+            lines.append(f"{key}={val}")
+
+        env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 # Global configuration instance

@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QTabWidget, QMenuBar, QStatusBar, QMessageBox, QProgressBar,
     QLabel, QPushButton, QComboBox, QTextEdit, QGroupBox,
     QFrame, QToolBar, QDockWidget, QListWidget, QListWidgetItem,
-    QFileDialog, QInputDialog
+    QFileDialog, QInputDialog, QLineEdit
 )
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QThread, QObject
 from PySide6.QtGui import QAction, QIcon, QFont, QTextCharFormat, QColor
@@ -27,40 +27,43 @@ from .terminal_widget import TerminalWidget
 from .chat_widget import ChatWidget
 from .session_manager import SessionManagerWidget
 from .status_bar import StatusBarWidget
-
+from .preferences_dialog import PreferencesDialog
 
 class MainWindow(QMainWindow):
     """Main application window"""
     
     # Signals
-    connect_requested = Signal(str, str, int)  # com_port, vendor_type, baud_rate
+    connect_requested = Signal(str, str, int, str, str)  # com_port, vendor_type, baud_rate, username, password
     disconnect_requested = Signal()
     command_sent = Signal(str, str)  # session_id, command
     ai_query_sent = Signal(str, str, str)  # session_id, query, context
-    
+    save_session_requested = Signal()
+    load_session_requested = Signal()
+
     def __init__(self, app: 'NetworkSwitchAIApp'):
         super().__init__()
         self.app = app
         self.config = app.config
         self.logger = get_logger("main_window")
-        
+        self.preferences_dialog = None  # Initialize preferences dialog
+
         # Initialize UI
         self.setup_ui()
         self.setup_menu_bar()
         self.setup_tool_bar()
         self.setup_status_bar()
-        
+
         # Connect signals
         self.connect_signals()
-        
+
         # Initialize widgets
         self.init_widgets()
-        
+
         # Start update timer
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update_status)
         self.update_timer.start(1000)  # Update every second
-        
+
         self.logger.info("Main window initialized")
     
     def setup_ui(self):
@@ -219,6 +222,22 @@ class MainWindow(QMainWindow):
         self.vendor_combo.addItems(["Cisco", "H3C", "Juniper", "Huawei"])
         vendor_layout.addWidget(self.vendor_combo)
         connection_layout.addLayout(vendor_layout)
+
+        # Credentials
+        user_layout = QHBoxLayout()
+        user_layout.addWidget(QLabel("Username:"))
+        self.username_edit = QLineEdit()
+        self.username_edit.setPlaceholderText("Optional username")
+        user_layout.addWidget(self.username_edit)
+        connection_layout.addLayout(user_layout)
+
+        pass_layout = QHBoxLayout()
+        pass_layout.addWidget(QLabel("Password:"))
+        self.password_edit = QLineEdit()
+        self.password_edit.setEchoMode(QLineEdit.Password)
+        self.password_edit.setPlaceholderText("Optional password")
+        pass_layout.addWidget(self.password_edit)
+        connection_layout.addLayout(pass_layout)
         
         # Connection buttons
         button_layout = QHBoxLayout()
@@ -277,9 +296,17 @@ class MainWindow(QMainWindow):
         open_session_action.setShortcut("Ctrl+O")
         open_session_action.triggered.connect(self.on_open_session)
         file_menu.addAction(open_session_action)
-        
+
+        save_session_action = QAction("Save Session", self)
+        save_session_action.triggered.connect(self.on_save_session)
+        file_menu.addAction(save_session_action)
+
+        load_session_action = QAction("Load Session", self)
+        load_session_action.triggered.connect(self.on_load_session)
+        file_menu.addAction(load_session_action)
+
         file_menu.addSeparator()
-        
+
         exit_action = QAction("Exit", self)
         exit_action.setShortcut("Ctrl+Q")
         exit_action.triggered.connect(self.close)
@@ -289,6 +316,7 @@ class MainWindow(QMainWindow):
         edit_menu = menubar.addMenu("Edit")
         
         preferences_action = QAction("Preferences", self)
+        preferences_action.setShortcut("Ctrl+,")
         preferences_action.triggered.connect(self.on_preferences)
         edit_menu.addAction(preferences_action)
         
@@ -404,12 +432,14 @@ class MainWindow(QMainWindow):
         port = self.port_combo.currentText()
         vendor = self.vendor_combo.currentText().lower()
         baud_rate = 9600  # Default baud rate
+        username = self.username_edit.text().strip()
+        password = self.password_edit.text().strip()
         
         if port and port != "No ports available":
             self.set_connection_status("Connecting...")
             
             # Emit connect requested signal
-            self.connect_requested.emit(port, vendor, baud_rate)
+            self.connect_requested.emit(port, vendor, baud_rate, username, password)
     
     @Slot()
     def on_disconnect_clicked(self):
@@ -430,10 +460,32 @@ class MainWindow(QMainWindow):
         self.session_manager.open_session()
     
     @Slot()
+    def on_save_session(self):
+        self.save_session_requested.emit()
+
+    @Slot()
+    def on_load_session(self):
+        self.load_session_requested.emit()
+
+    @Slot()
     def on_preferences(self):
-        """Handle preferences"""
-        # TODO: Implement preferences dialog
-        QMessageBox.information(self, "Preferences", "Preferences dialog not implemented yet.")
+        """Handle preferences dialog"""
+        try:
+            if not self.preferences_dialog:
+                self.preferences_dialog = PreferencesDialog(self.config, self)
+                self.preferences_dialog.settings_changed.connect(self.on_settings_changed)
+            self.preferences_dialog.show()
+        except Exception as e:
+            self.logger.error(f"Failed to open Preferences dialog: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to open Preferences dialog: {str(e)}")
+
+    @Slot()
+    def on_settings_changed(self):
+        """Handle settings changed from preferences dialog"""
+        self.logger.info("Settings changed via preferences dialog")
+        # Notify the application to reload config or reinitialize services if needed
+        # This is a placeholder for any reactive logic you might need
+        QMessageBox.information(self, "Settings Updated", "Application settings have been updated. Some changes may require a restart to take full effect.")
     
     @Slot()
     def on_refresh(self):

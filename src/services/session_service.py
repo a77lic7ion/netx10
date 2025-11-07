@@ -30,6 +30,9 @@ class Session:
         self.device_model: Optional[str] = None
         self.os_version: Optional[str] = None
         self.vendor_specific_data: Optional[Dict[str, Any]] = None
+        # Saved login credentials (persisted via vendor_specific_data)
+        self.username: Optional[str] = None
+        self.password: Optional[str] = None
         # Error tracking
         self.error_message: str = ""  # Placeholder
 
@@ -94,7 +97,7 @@ class SessionService(QObject):
             vendor_specific_data=session.vendor_specific_data,
         )
     
-    async def create_session(self, com_port: str, vendor_type: str, baud_rate: int = 9600) -> Session:
+    async def create_session(self, com_port: str, vendor_type: str, baud_rate: int = 9600, username: Optional[str] = None, password: Optional[str] = None) -> Session:
         """Create a new device session"""
         try:
             session_id = str(uuid.uuid4())
@@ -108,6 +111,16 @@ class SessionService(QObject):
                 start_time=datetime.utcnow(),
                 status=SessionStatus.CREATED,
             )
+            # Store credentials on session and vendor_specific_data for DB persistence
+            session.username = username
+            session.password = password
+            session.vendor_specific_data = (session.vendor_specific_data or {})
+            session.vendor_specific_data.update({
+                "credentials": {
+                    "username": username or "",
+                    "password": password or ""
+                }
+            })
             
             # Store session
             self.active_sessions[session_id] = session

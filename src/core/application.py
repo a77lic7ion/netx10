@@ -4,11 +4,12 @@ Main Application Controller
 
 import asyncio
 import sys
+import json
 from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime
 
-from PySide6.QtWidgets import QMainWindow, QMessageBox
+from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PySide6.QtCore import Qt, QTimer, Signal, Slot
 from PySide6.QtGui import QIcon, QFont
 
@@ -118,6 +119,8 @@ class NetworkSwitchAIApp(QMainWindow):
         self.main_window.disconnect_requested.connect(self._handle_disconnect_request)
         self.main_window.command_sent.connect(self._handle_command_sent)
         self.main_window.ai_query_sent.connect(self._handle_ai_query)
+        self.main_window.save_session_requested.connect(self.save_session)
+        self.main_window.load_session_requested.connect(self.load_session)
         
         # Service signals
         self.session_created.connect(self.main_window.on_session_created)
@@ -147,10 +150,10 @@ class NetworkSwitchAIApp(QMainWindow):
         y = (screen_geometry.height() - self.height()) // 2
         self.move(x, y)
     
-    @Slot(str, str, int)
-    def _handle_connect_request(self, com_port: str, vendor_type: str, baud_rate: int):
-        """Handle connection request from UI"""
-        asyncio.create_task(self._connect_device(com_port, vendor_type, baud_rate))
+    @Slot(str, str, int, str, str)
+    def _handle_connect_request(self, com_port: str, vendor_type: str, baud_rate: int, username: str, password: str):
+        """Handle connection request from UI, including optional credentials"""
+        asyncio.create_task(self._connect_device(com_port, vendor_type, baud_rate, username, password))
     
     @Slot()
     def _handle_disconnect_request(self):
@@ -167,7 +170,7 @@ class NetworkSwitchAIApp(QMainWindow):
         """Handle AI query from UI"""
         asyncio.create_task(self._process_ai_query(session_id, query, context))
     
-    async def _connect_device(self, com_port: str, vendor_type: str, baud_rate: int):
+    async def _connect_device(self, com_port: str, vendor_type: str, baud_rate: int, username: str = "", password: str = ""):
         """Connect to network device"""
         try:
             logger.info(f"Connecting to {com_port} ({vendor_type}) at {baud_rate} baud")
@@ -176,7 +179,9 @@ class NetworkSwitchAIApp(QMainWindow):
             session = await self.session_service.create_session(
                 com_port=com_port,
                 vendor_type=vendor_type,
-                baud_rate=baud_rate
+                baud_rate=baud_rate,
+                username=username or None,
+                password=password or None
             )
             
             self._current_session_id = session.session_id
@@ -214,6 +219,81 @@ class NetworkSwitchAIApp(QMainWindow):
         except Exception as e:
             logger.error(f"Disconnection error: {e}")
             self.error_occurred.emit("Disconnection Error", str(e))
+
+    @Slot()
+    def save_session(self):
+        """Save the current session to a file."""
+        if not self._current_session_id:
+            self._show_error("Save Error", "No active session to save.")
+            return
+
+        session_data = self.export_session(self._current_session_id)
+        if not session_data:
+            self._show_error("Save Error", "Failed to export session data.")
+            return
+
+        # Add AI history
+        session_data['ai_history'] = self.ai_service.get_memory_summary()
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Session",
+            self.config.data_dir,
+            "JSON Files (*.json)"
+        )
+
+        if file_path:
+            try:
+                with open(file_path, 'w') as f:
+                    json.dump(session_data, f, indent=4)
+                logger.info(f"Session saved to {file_path}")
+            except Exception as e:
+                logger.error(f"Failed to save session: {e}")
+                self._show_error("Save Error", f"Failed to save session: {e}")
+
+    @Slot()
+    def load_session(self):
+        """Load a session from a file."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Load Session",
+            self.config.data_dir,
+            "JSON Files (*.json)"
+        )
+
+        if file_path:
+            try:
+                with open(file_path, 'r') as f:
+                    session_data = json.load(f)
+                
+                # This is a simplified load. A real implementation would need to
+                # properly restore the session in the services, handle UI updates,
+                # and potentially reconnect to the device.
+                
+                # For now, we'll just log the loaded data.
+                logger.info(f"Session loaded from {file_path}")
+                
+                # Example of restoring parts of the session
+                if 'session_id' in session_data:
+                    self._current_session_id = session_data['session_id']
+                    
+                if 'ai_history' in session_data:
+                    self.ai_service.clear_conversation_memory()
+                    # A method to load history would be needed in AIService
+                    # self.ai_service.load_memory_summary(session_data['ai_history'])
+                    
+                # Re-create session in session_service (conceptual)
+                # await self.session_service.recreate_session(session_data)
+
+                self.main_window.terminal.append(f"Loaded session: {session_data.get('session_id')}")
+                if 'commands' in session_data:
+                    for cmd in session_data['commands']:
+                        self.main_window.terminal.append(f"> {cmd['command']}")
+                        self.main_window.terminal.append(cmd['output'])
+
+            except Exception as e:
+                logger.error(f"Failed to load session: {e}")
+                self._show_error("Load Error", f"Failed to load session: {e}")
 
     @Slot(str)
     def _on_session_connected(self, session_id: str):
@@ -451,3 +531,4 @@ class NetworkSwitchAIApp(QMainWindow):
             logger.error(f"Device name persistence error: {e}")
 
         return info
+
