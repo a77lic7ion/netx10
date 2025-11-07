@@ -302,14 +302,19 @@ class MainWindow(QMainWindow):
         
         # Tools Menu
         tools_menu = menubar.addMenu("Tools")
-        
+
         discover_devices_action = QAction("Discover Devices", self)
         discover_devices_action.triggered.connect(self.on_discover_devices)
         tools_menu.addAction(discover_devices_action)
-        
+
         import_configs_action = QAction("Import Configs", self)
         import_configs_action.triggered.connect(self.on_import_configs)
         tools_menu.addAction(import_configs_action)
+
+        # Fetch Device Info action
+        fetch_device_info_action = QAction("Fetch Device Info", self)
+        fetch_device_info_action.triggered.connect(self.on_fetch_device_info)
+        tools_menu.addAction(fetch_device_info_action)
         
         # Help Menu
         help_menu = menubar.addMenu("Help")
@@ -446,6 +451,14 @@ class MainWindow(QMainWindow):
         """Handle import configs"""
         # TODO: Implement config import
         QMessageBox.information(self, "Import Configs", "Config import not implemented yet.")
+
+    @Slot()
+    def on_fetch_device_info(self):
+        """Fetch device information via Application"""
+        if not self.app.is_connected:
+            QMessageBox.warning(self, "Not Connected", "Connect to a device first.")
+            return
+        asyncio.create_task(self.app.fetch_device_info())
     
     @Slot()
     def on_export_session(self):

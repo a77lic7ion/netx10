@@ -402,3 +402,54 @@ class NetworkSwitchAIApp(QMainWindow):
             "services_initialized": self._services_initialized,
             "active_sessions": len(self.session_service.active_sessions) if self._services_initialized else 0
         }
+
+    async def send_command(self, command: str):
+        """Execute a command against the current session."""
+        if not self._current_session_id:
+            self.error_occurred.emit("Command Error", "No active session")
+            return
+        await self._execute_command(self._current_session_id, command)
+
+    async def send_enter(self):
+        """Send raw newline to the device (simulate Enter)."""
+        if not self._current_session_id:
+            self.error_occurred.emit("Command Error", "No active session")
+            return
+        result = await self.session_service.send_enter(self._current_session_id)
+        if not result.success:
+            self.error_occurred.emit("Command Error", result.error or "Unknown error")
+
+    async def fetch_device_info(self) -> Dict[str, Any]:
+        """Fetch device info for the current session and allow naming."""
+        if not self._current_session_id:
+            self.error_occurred.emit("Device Info Error", "No active session")
+            return {}
+
+        info = await self.session_service.fetch_device_info(self._current_session_id)
+        if not info:
+            self.error_occurred.emit("Device Info Error", "Failed to retrieve device information")
+            return {}
+
+        summary = (
+            f"Device Model: {info.get('device_model') or 'N/A'}\n"
+            f"OS Version: {info.get('os_version') or 'N/A'}\n"
+            f"Serial Number: {info.get('serial_number') or 'N/A'}\n"
+            f"Hostname: {info.get('hostname') or 'N/A'}\n"
+            f"Uptime: {info.get('uptime') or 'N/A'}\n"
+        )
+        self.terminal_data_received.emit(summary)
+
+        try:
+            from PySide6.QtWidgets import QInputDialog
+            default_name = info.get("hostname") or ""
+            device_name, ok = QInputDialog.getText(self, "Save Device Name", "Enter a device name:", text=default_name)
+            if ok and device_name:
+                session = self.session_service.active_sessions.get(self._current_session_id)
+                if session:
+                    session.device_name = device_name
+                    await self.db.update_session(session)
+                    self.terminal_data_received.emit(f"Saved device name: {device_name}\n")
+        except Exception as e:
+            logger.error(f"Device name prompt error: {e}")
+
+        return info

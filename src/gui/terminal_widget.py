@@ -124,6 +124,18 @@ class TerminalWidget(QWidget):
         self.export_button = QPushButton("Export")
         self.export_button.clicked.connect(self.export_terminal)
         controls_layout.addWidget(self.export_button)
+
+        # Enter button (simulate pressing Enter)
+        self.enter_button = QPushButton("Enter")
+        self.enter_button.clicked.connect(self.send_enter)
+        self.enter_button.setEnabled(False)
+        controls_layout.addWidget(self.enter_button)
+
+        # Fetch device info button
+        self.fetch_info_button = QPushButton("Fetch Info")
+        self.fetch_info_button.clicked.connect(self.fetch_device_info)
+        self.fetch_info_button.setEnabled(False)
+        controls_layout.addWidget(self.fetch_info_button)
         
         layout.addLayout(controls_layout)
         
@@ -189,6 +201,10 @@ class TerminalWidget(QWidget):
         # Update UI state
         self.command_input.setEnabled(connected)
         self.send_button.setEnabled(connected)
+        if hasattr(self, 'enter_button'):
+            self.enter_button.setEnabled(connected)
+        if hasattr(self, 'fetch_info_button'):
+            self.fetch_info_button.setEnabled(connected)
         
         # Update prompt
         if connected:
@@ -309,6 +325,19 @@ class TerminalWidget(QWidget):
         """Export terminal output"""
         # TODO: Implement export functionality
         QMessageBox.information(self, "Export", "Export functionality not implemented yet.")
+
+    def send_enter(self):
+        """Send raw newline to the device"""
+        if not self.is_connected:
+            return
+        asyncio.create_task(self.app.send_enter())
+
+    def fetch_device_info(self):
+        """Fetch device information from the device"""
+        if not self.is_connected:
+            QMessageBox.warning(self, "Not Connected", "Connect to a device first.")
+            return
+        asyncio.create_task(self.app.fetch_device_info())
     
     def show_context_menu(self, position):
         """Show context menu"""

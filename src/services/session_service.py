@@ -22,13 +22,21 @@ class Session:
         self.status = status
         self.connected_at: Optional[datetime] = None
         self.disconnected_at: Optional[datetime] = None
-        self.commands: List[str] = [] #Placeholder
-        self.device_info: str = "" #Placeholder
-        self.error_message: str = "" # Placeholder
+        # Command tracking
+        self.commands: List[str] = []  # Placeholder
+        self.command_history: List[str] = []
+        # Device/session metadata compatible with DatabaseService expectations
+        self.device_name: Optional[str] = None
+        self.device_model: Optional[str] = None
+        self.os_version: Optional[str] = None
+        self.vendor_specific_data: Optional[Dict[str, Any]] = None
+        # Error tracking
+        self.error_message: str = ""  # Placeholder
 
     def add_command(self, command: str, output: str, success: bool):
         """Add command to session history."""
         self.commands.append(command)  # Simplified for now
+        self.command_history.append(command)
 
 class CommandResult:
     def __init__(self, success: bool, output: str, error: str, execution_time: float):
@@ -219,6 +227,96 @@ class SessionService(QObject):
             
             self.session_error.emit(session_id, "Command Error", str(e))
             return error_result
+
+    async def send_enter(self, session_id: str) -> CommandResult:
+        """Send a raw newline to the device (simulate pressing Enter)."""
+        try:
+            session = self.active_sessions.get(session_id)
+            if not session:
+                raise ValueError(f"Session not found: {session_id}")
+
+            if session.status != SessionStatus.CONNECTED:
+                raise ValueError(f"Session not connected: {session_id}")
+
+            # Send an empty command; SerialService will append newline
+            response = await self.serial_service.send_command(session.com_port, "")
+
+            success = response is not None
+            output = response or ""
+            error = "" if success else "No response or port not connected"
+            result = CommandResult(success=success, output=output, error=error, execution_time=0.0)
+
+            # Emit signal to reflect interaction (using a placeholder command label)
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.command_executed.emit(session_id, "<ENTER>", result.output, timestamp)
+
+            self.logger.info(f"Sent ENTER in session {session_id}")
+            return result
+        except Exception as e:
+            self.logger.error(f"Send ENTER error for session {session_id}: {e}")
+            error_result = CommandResult(success=False, output="", error=str(e), execution_time=0.0)
+            self.session_error.emit(session_id, "Command Error", str(e))
+            return error_result
+
+    async def fetch_device_info(self, session_id: str) -> Dict[str, Any]:
+        """Fetch and parse device information via vendor implementation.
+
+        Returns a dict with keys like device_model, os_version, serial_number, hostname, uptime.
+        """
+        try:
+            session = self.active_sessions.get(session_id)
+            if not session:
+                raise ValueError(f"Session not found: {session_id}")
+
+            # Create vendor instance
+            try:
+                vendor_enum = VendorType(session.vendor_type)
+            except Exception:
+                # Accept raw strings already matching enum values
+                vendor_enum = VendorType[session.vendor_type.upper()] if isinstance(session.vendor_type, str) else session.vendor_type
+
+            vendor = self.vendor_factory.create_vendor(vendor_enum)
+            if not vendor:
+                raise ValueError(f"Unsupported vendor type: {session.vendor_type}")
+
+            # Delegate to vendor-specific implementation
+            device_info_obj = await vendor.get_device_info()
+            # Convert to dict
+            info_dict: Dict[str, Any] = {
+                "device_model": getattr(device_info_obj, "device_model", None),
+                "os_version": getattr(device_info_obj, "os_version", None),
+                "serial_number": getattr(device_info_obj, "serial_number", None),
+                "hostname": getattr(device_info_obj, "hostname", None),
+                "uptime": getattr(device_info_obj, "uptime", None),
+            }
+
+            # Update session fields for persistence
+            session.device_model = info_dict.get("device_model")
+            session.os_version = info_dict.get("os_version")
+            # Store remaining details in vendor_specific_data
+            session.vendor_specific_data = {
+                k: v for k, v in info_dict.items() if k not in ("device_model", "os_version")
+            }
+
+            await self.db.update_session(session)
+
+            # Emit a synthetic event indicating info retrieval
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            pretty_output = (
+                f"Model: {info_dict.get('device_model') or 'N/A'}\n"
+                f"OS: {info_dict.get('os_version') or 'N/A'}\n"
+                f"Serial: {info_dict.get('serial_number') or 'N/A'}\n"
+                f"Hostname: {info_dict.get('hostname') or 'N/A'}\n"
+                f"Uptime: {info_dict.get('uptime') or 'N/A'}"
+            )
+            self.command_executed.emit(session_id, "fetch_device_info", pretty_output, timestamp)
+
+            self.logger.info(f"Fetched device info for session {session_id}: {info_dict}")
+            return info_dict
+        except Exception as e:
+            self.logger.error(f"Fetch device info error for session {session_id}: {e}")
+            self.session_error.emit(session_id, "Device Info Error", str(e))
+            return {}
     
     async def get_session(self, session_id: str) -> Optional[Session]:
         """Get session by ID"""
