@@ -47,6 +47,7 @@ class NetworkSwitchAIApp(QMainWindow):
         self._services_initialized = False
         self._current_session_id: Optional[str] = None
         self.start_time = datetime.utcnow()
+        self.current_device = None
         
         # Initialize services
         self._initialize_services()
@@ -76,6 +77,9 @@ class NetworkSwitchAIApp(QMainWindow):
             self.serial_service = SerialService(self.config.serial)
             self.session_service = SessionService(self.db, self.serial_service, self.config)
             self.ai_service = AIService(self.config.ai)
+
+            # Forward serial data to terminal output
+            self.serial_service.data_listener = lambda data: self.terminal_data_received.emit(data)
             
             self._services_initialized = True
             logger.info("All services initialized successfully")
@@ -120,6 +124,14 @@ class NetworkSwitchAIApp(QMainWindow):
         self.session_ended.connect(self.main_window.on_session_ended)
         self.ai_response_received.connect(self.main_window.on_ai_response_received)
         self.error_occurred.connect(self.main_window.on_error_occurred)
+
+        # Wire session service events to app-level status updates
+        self.session_service.session_connected.connect(self._on_session_connected)
+        self.session_service.session_disconnected.connect(self._on_session_disconnected)
+        self.session_service.session_error.connect(self._on_session_error)
+
+        # Also reflect low-level serial connection changes directly
+        self.serial_service.add_connection_listener(lambda port, connected: self.connection_status_changed.emit("Connected" if connected else "Disconnected", connected))
     
     def _setup_auto_save(self):
         """Setup auto-save functionality"""
@@ -172,17 +184,17 @@ class NetworkSwitchAIApp(QMainWindow):
             # Connect to device
             success = await self.session_service.connect_session(session.session_id)
             
-                        if success:
-                            logger.info(f"Successfully connected to {com_port}")
-                            self.session_created.emit(session.session_id)
-                        else:
-                            logger.error(f"Failed to connect to {com_port}")
-                            error_msg = session.error_message if session and session.error_message else f"Failed to connect to {com_port}"
-                            self.error_occurred.emit("Connection Error", error_msg)
-            
-                    except Exception as e:
-                        logger.error(f"Connection error: {e}")
-                        self.error_occurred.emit("Connection Error", str(e))    
+            if success:
+                logger.info(f"Successfully connected to {com_port}")
+                self.session_created.emit(session.session_id, session.vendor_type)
+            else:
+                logger.error(f"Failed to connect to {com_port}")
+                error_msg = session.error_message if session and session.error_message else f"Failed to connect to {com_port}"
+                self.error_occurred.emit("Connection Error", error_msg)
+        except Exception as e:
+            logger.error(f"Connection error: {e}")
+            self.error_occurred.emit("Connection Error", str(e))
+
     async def _disconnect_device(self):
         """Disconnect from current device"""
         if not self._current_session_id:
@@ -202,7 +214,22 @@ class NetworkSwitchAIApp(QMainWindow):
         except Exception as e:
             logger.error(f"Disconnection error: {e}")
             self.error_occurred.emit("Disconnection Error", str(e))
-    
+
+    @Slot(str)
+    def _on_session_connected(self, session_id: str):
+        """Handle session connected event from SessionService"""
+        self.connection_status_changed.emit("Connected", True)
+
+    @Slot(str)
+    def _on_session_disconnected(self, session_id: str):
+        """Handle session disconnected event from SessionService"""
+        self.connection_status_changed.emit("Disconnected", False)
+
+    @Slot(str, str, str)
+    def _on_session_error(self, session_id: str, error_type: str, error_message: str):
+        """Forward session errors to UI"""
+        self.error_occurred.emit(error_type, error_message)
+
     async def _execute_command(self, session_id: str, command: str):
         """Execute command on device"""
         try:
@@ -223,7 +250,7 @@ class NetworkSwitchAIApp(QMainWindow):
         except Exception as e:
             logger.error(f"Command execution error: {e}")
             self.error_occurred.emit("Command Error", str(e))
-    
+
     async def _process_ai_query(self, session_id: str, query: str, context: str):
         """Process AI query"""
         try:
@@ -249,7 +276,7 @@ class NetworkSwitchAIApp(QMainWindow):
         except Exception as e:
             logger.error(f"AI processing error: {e}")
             self.error_occurred.emit("AI Error", str(e))
-    
+
     def _auto_save(self):
         """Auto-save application state"""
         try:
@@ -259,11 +286,11 @@ class NetworkSwitchAIApp(QMainWindow):
                 logger.debug("Auto-save completed")
         except Exception as e:
             logger.error(f"Auto-save error: {e}")
-    
+
     def _show_error(self, title: str, message: str):
         """Show error dialog"""
         QMessageBox.critical(self, title, message)
-    
+
     def closeEvent(self, event):
         """Handle application close event"""
         try:
@@ -283,25 +310,25 @@ class NetworkSwitchAIApp(QMainWindow):
         except Exception as e:
             logger.error(f"Error during application shutdown: {e}")
             event.accept()
-    
+
     @property
     def current_session_id(self) -> Optional[str]:
         """Get current session ID"""
         return self._current_session_id
-    
+
     @property
     def is_connected(self) -> bool:
         """Check if connected to a device"""
         return self._current_session_id is not None
-    
+
     def get_all_sessions(self):
         """Get all sessions from session service"""
         return self.session_service.get_all_sessions()
-    
+
     def get_session(self, session_id: str):
         """Get specific session by ID"""
         return self.session_service.get_session(session_id)
-    
+
     def get_session_commands(self, session_id: str):
         """Get command history for a session"""
         session = self.session_service.active_sessions.get(session_id)
@@ -316,13 +343,13 @@ class NetworkSwitchAIApp(QMainWindow):
                 for cmd in session.commands
             ]
         return []
-    
+
     def get_session_ai_interactions(self, session_id: str):
         """Get AI interactions for a session"""
         # This would come from AI service in a real implementation
         # For now, return empty list
         return []
-    
+
     def export_session(self, session_id: str):
         """Export session data"""
         session = self.session_service.active_sessions.get(session_id)
@@ -347,17 +374,17 @@ class NetworkSwitchAIApp(QMainWindow):
                 "command_count": len(session.commands)
             }
         return None
-    
+
     async def create_session(self, session_name: str):
         """Create a new session"""
         # This would be implemented based on your session service
         pass
-    
+
     async def end_session(self, session_id: str):
         """End a specific session"""
         # This would be implemented based on your session service
         pass
-    
+
     @property
     def active_sessions(self) -> Dict[str, Any]:
         """Get active sessions from session service"""

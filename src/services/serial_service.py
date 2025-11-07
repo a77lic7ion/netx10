@@ -353,6 +353,8 @@ class SerialService:
         
         self.connections: Dict[str, SerialConnection] = {}
         self.connection_listeners: List[Callable[[str, bool], None]] = []
+        # Optional listener to forward incoming serial data upstream
+        self.data_listener: Optional[Callable[[str], None]] = None
         
         self.is_running = False
         self.monitor_task: Optional[asyncio.Task] = None
@@ -513,6 +515,12 @@ class SerialService:
         """Handle data from connection"""
         # This can be overridden or extended to handle incoming data
         self.logger.debug(f"Received data: {data[:100]}...")
+        # Forward data to external listener if provided
+        if self.data_listener:
+            try:
+                self.data_listener(data)
+            except Exception as e:
+                self.logger.error(f"Error in data listener: {e}")
     
     async def _connection_monitor(self):
         """Monitor connections and handle reconnections"""

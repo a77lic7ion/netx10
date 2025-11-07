@@ -1,12 +1,8 @@
-"""
-Session Service for managing device connections and command execution
-"""
-
-import asyncio
 import uuid
-from datetime import datetime
 from typing import Dict, List, Optional, Any
+from datetime import datetime
 from PySide6.QtCore import QObject, Signal, Slot
+
 
 from services.database_service import DatabaseService
 from services.serial_service import SerialService
@@ -14,7 +10,39 @@ from vendor.vendor_factory import VendorFactory
 from core.config import AppConfig
 from core.constants import SessionStatus, VendorType
 from utils.logging import get_logger
-from models.device_models import Session, CommandResult, DeviceInfo
+#from models.device_models import Session, CommandResult, DeviceInfo
+
+class Session:
+    def __init__(self, session_id: str, com_port: str, baud_rate: int, vendor_type: str, start_time: datetime, status: SessionStatus):
+        self.session_id = session_id
+        self.com_port = com_port
+        self.baud_rate = baud_rate
+        self.vendor_type = vendor_type
+        self.start_time = start_time
+        self.status = status
+        self.connected_at: Optional[datetime] = None
+        self.disconnected_at: Optional[datetime] = None
+        self.commands: List[str] = [] #Placeholder
+        self.device_info: str = "" #Placeholder
+        self.error_message: str = "" # Placeholder
+
+    def add_command(self, command: str, output: str, success: bool):
+        """Add command to session history."""
+        self.commands.append(command)  # Simplified for now
+
+class CommandResult:
+    def __init__(self, success: bool, output: str, error: str, execution_time: float):
+        self.success = success
+        self.output = output
+        self.error = error
+        self.execution_time = execution_time
+
+class DeviceInfo:
+    def __init__(self, vendor_type: str, model: str, firmware_version: str, serial_number: str):
+        self.vendor_type = vendor_type
+        self.model = model
+        self.firmware_version = firmware_version
+        self.serial_number = serial_number
 
 
 class SessionService(QObject):
@@ -157,9 +185,15 @@ class SessionService(QObject):
             if not self.serial_service:
                 raise ValueError("Serial service not initialized")
             
-            result = await self.serial_service.send_command(command)
+            response = await self.serial_service.send_command(session.com_port, command)
             
-            # Add command to session history
+            # Build result object based on response
+            success = response is not None
+            output = response or ""
+            error = "" if success else "No response or port not connected"
+            result = CommandResult(success=success, output=output, error=error, execution_time=0.0)
+            
+            # Add command to session history (simplified placeholder)
             session.add_command(command, result.output, result.success)
             
             # Update database
