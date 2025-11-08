@@ -26,7 +26,7 @@ class ProviderConfig(BaseSettings):
 
 class AIConfig(BaseSettings):
     """AI/ML configuration"""
-    default_provider: str = Field(default="openai", env="AI_PROVIDER")
+    default_provider: str = Field(default="gemini", env="AI_PROVIDER")
     model_name: str = Field(default="gpt-3.5-turbo", env="AI_MODEL_NAME")
     max_tokens: int = Field(default=1000, env="AI_MAX_TOKENS")
     temperature: float = Field(default=0.1, env="AI_TEMPERATURE")
