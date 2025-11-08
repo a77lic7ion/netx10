@@ -1,0 +1,23 @@
+{
+    "session_id": "00f84c20-2cc1-4c0e-bd41-a4b7af497555",
+    "device_info": {
+        "vendor": "h3c",
+        "model": null,
+        "firmware": null,
+        "serial": null
+    },
+    "connection": {
+        "com_port": "COM7",
+        "baud_rate": 9600
+    },
+    "credentials": {
+        "username": null,
+        "password": null
+    },
+    "status": "connected",
+    "created_at": "2025-11-08T05:44:21.514251",
+    "connected_at": "2025-11-08T07:44:21.589152",
+    "disconnected_at": null,
+    "commands": [],
+    "command_count": 0,
+    "ai_history": 
