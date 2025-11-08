@@ -1,7 +1,7 @@
 # NetworkSwitch AI Assistant  
 ### *Your Multi-Vendor Network Brain — Powered by AI*
 
-![NetworkSwitch AI Hero Banner](https://github.com/a77lic7ion/netx10/screenshots/banner.png)
+https://github.com/a77lic7ion/netx10/screenshots/banner.png
 
 [![Build Status](https://img.shields.io/badge/build-passing-00D26A?style=flat&logo=github)](https://github.com/a77lic7ion/netx10)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-0066FF?style=flat&logo=python)](https://python.org)
@@ -54,7 +54,8 @@
 | **Config Templates** | Pre-built for VLANs, ACLs, QoS, OSPF, BGP, etc. |
 | **Multi-Session Tabs** | Manage 50+ devices with color-coded sessions |
 
-![Workflow](https://github.com/a77lic7ion/netx10/screenshots/workflow.png)
+## Workflow
+https://github.com/a77lic7ion/netx10/screenshots/workflow.png
 
 ---
 

@@ -334,67 +334,87 @@ class NetworkSwitchAIApp(QMainWindow):
 
     async def _perform_prompt_login(self, session_id: str, username: str, password: str):
         """Send credentials based on detected login prompts from terminal data."""
-        # Helper to wait for prompt text on terminal stream
-        async def _wait_for_prompt(substrs, timeout: float = 8.0) -> bool:
-            evt = asyncio.Event()
-            matched = {"hit": False}
+        self.ai_status_changed.emit("Processing", "Attempting automated login...")
+        logger.info(f"Starting automated login for session: {session_id}")
 
-            def _on_data(data: str):
+        try:
+            # Helper to wait for prompt text on terminal stream
+            async def _wait_for_prompt(substrs, timeout: float = 8.0) -> bool:
+                evt = asyncio.Event()
+                matched = {"hit": False}
+
+                def _on_data(data: str):
+                    try:
+                        dl = data.lower()
+                        for s in substrs:
+                            if s in dl:
+                                matched["hit"] = True
+                                try:
+                                    evt.set()
+                                except Exception:
+                                    pass
+                                break
+                    except Exception:
+                        pass
+
                 try:
-                    dl = data.lower()
-                    for s in substrs:
-                        if s in dl:
-                            matched["hit"] = True
-                            try:
-                                evt.set()
-                            except Exception:
-                                pass
-                            break
-                except Exception:
-                    pass
+                    self.terminal_data_received.connect(_on_data)
+                    try:
+                        await asyncio.wait_for(evt.wait(), timeout=timeout)
+                    except asyncio.TimeoutError:
+                        logger.warning(f"Timeout waiting for prompts: {substrs}")
+                        return False
+                    return matched["hit"]
+                finally:
+                    try:
+                        self.terminal_data_received.disconnect(_on_data)
+                    except Exception:
+                        pass
 
+            # Nudge device to show prompts
             try:
-                self.terminal_data_received.connect(_on_data)
-                try:
-                    await asyncio.wait_for(evt.wait(), timeout=timeout)
-                except asyncio.TimeoutError:
-                    return False
-                return matched["hit"]
-            finally:
-                try:
-                    self.terminal_data_received.disconnect(_on_data)
-                except Exception:
-                    pass
+                await self.session_service.write_to_session(session_id, "\r\n")
+                await asyncio.sleep(0.3)
+            except Exception as e:
+                logger.warning(f"Failed to send initial Enter nudge: {e}")
 
-        # Nudge device to show prompts
-        try:
-            # Use a raw write for the initial "Enter" to avoid command timeouts
-            # if the device isn't immediately responsive with a prompt.
-            await self.session_service.write_to_session(session_id, "\r\n")
-            await asyncio.sleep(0.3)
+            # Username prompt
+            if username:
+                username_prompts = ["username", "login:", "user:", "> username", "> login", "] username"]
+                logger.info("Waiting for username prompt...")
+                if await _wait_for_prompt(username_prompts, timeout=10.0):
+                    logger.info("Username prompt detected. Sending username.")
+                    await self.session_service.write_to_session(session_id, f"{username}\r\n")
+                    await asyncio.sleep(0.3)
+                else:
+                    logger.warning("Username prompt not detected.")
+
+            # Password prompt
+            if password:
+                password_prompts = ["password", "passwd:"]
+                logger.info("Waiting for password prompt...")
+                if await _wait_for_prompt(password_prompts, timeout=10.0):
+                    logger.info("Password prompt detected. Sending password.")
+                    await self.session_service.write_to_session(session_id, f"{password}\r\n")
+                    await asyncio.sleep(0.3)
+                else:
+                    logger.warning("Password prompt not detected.")
+
+            # Final enter to settle into CLI
+            try:
+                await self.session_service.send_enter(session_id)
+                logger.info("Automated login sequence completed.")
+                self.ai_status_changed.emit("Idle", "Login sequence finished.")
+            except Exception as e:
+                logger.error(f"Failed to send final Enter after login: {e}")
+                self.ai_status_changed.emit("Error", "Login failed.")
+
         except Exception as e:
-            logger.warning(f"Failed to send initial Enter nudge: {e}")
-
-        # Username prompt
-        if username:
-            username_prompts = ["username", "login:", "user:", "> username", "> login", "] username"]
-            if await _wait_for_prompt(username_prompts, timeout=10.0):
-                # Write username followed by Enter directly
-                await self.session_service.write_to_session(session_id, f"{username}\r\n")
-                await asyncio.sleep(0.3)
-
-        # Password prompt
-        if password:
-            password_prompts = ["password", "passwd:"]
-            if await _wait_for_prompt(password_prompts, timeout=10.0):
-                # Write password followed by Enter directly
-                await self.session_service.write_to_session(session_id, f"{password}\r\n")
-                await asyncio.sleep(0.3)
-
-        # Final enter to settle into CLI
-        try:
-            await self.session_service.send_enter(session_id)
-        except Exception:
+            logger.error(f"Automated login failed: {e}")
+            self.ai_status_changed.emit("Error", "Automated login failed.")
+        finally:
+            # Ensure status is reset to Idle if it was left in a processing state
+            # This is a fallback, individual steps should set status more granularly
             pass
 
     @Slot(str)
