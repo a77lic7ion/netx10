@@ -82,9 +82,9 @@ class NetworkSwitchAIApp(QMainWindow):
             self.serial_service = SerialService(self.config.serial)
             self.session_service = SessionService(self.db, self.serial_service, self.config)
             self.ai_status_changed.emit("Initializing", "AI service is starting...")
-        self.ai_service = AIService(self.config.ai)
-        # Asynchronously initialize the AI service
-        self._create_tracked_task(self._initialize_ai_service())
+            self.ai_service = AIService(self.config.ai)
+            # Asynchronously initialize the AI service
+            self._create_tracked_task(self._initialize_ai_service())
 
             # Forward serial data to terminal output
             self.serial_service.data_listener = lambda data: self.terminal_data_received.emit(data)
@@ -482,79 +482,42 @@ class NetworkSwitchAIApp(QMainWindow):
         try:
             logger.info(f"Processing AI query: {query}")
             
-            # Get session context
             session = await self.session_service.get_session(session_id)
             if not session:
                 self.error_occurred.emit("AI Error", "Session not found")
                 self.ai_status_changed.emit("Error", "Session not found.")
                 return
             
-            # Notify UI that AI processing started
-            try:
-                self.ai_response_started.emit(query)
-            except Exception:
-                pass
+            self.ai_response_started.emit(query)
 
-            # First, detect simple config intents (e.g., VLAN creation) and provide sequences
-            try:
-                cfg_map = self.ai_service.map_config_intent_to_vendor_commands(query, session.vendor_type)
-            except Exception:
-                cfg_map = None
-
+            # First, try to map simple configuration intents
+            cfg_map = self.ai_service.map_config_intent_to_vendor_commands(query, session.vendor_type)
             if cfg_map and isinstance(cfg_map, dict) and cfg_map.get("commands"):
-                response_text = cfg_map.get("summary") or "Generated configuration sequence."
+                response_text = cfg_map.get("summary", "Generated configuration sequence.")
                 self.ai_response_received.emit(session_id, response_text)
-                try:
-                    self.ai_suggestion_received.emit(cfg_map["commands"])  # show the sequence as suggestions
-                except Exception:
-                    pass
-                try:
-                    self.ai_response_ended.emit()
-                except Exception:
-                    pass
+                self.ai_suggestion_received.emit(cfg_map["commands"])
+                self.ai_response_ended.emit()
                 self.ai_status_changed.emit("Idle", "AI query completed.")
                 return
 
-            # Quick vendor-specific mapping for common intents (e.g., running config)
-            try:
-                quick_cmd = self.ai_service.map_query_to_vendor_command(query, session.vendor_type)
-            except Exception:
-                quick_cmd = None
-
+            # Then, try quick vendor-specific commands
+            quick_cmd = self.ai_service.map_query_to_vendor_command(query, session.vendor_type)
             if quick_cmd:
-                # Format a concise response and emit suggestions
+                from core.constants import VendorType
                 try:
-                    from core.constants import VendorType, CROSS_VENDOR_MAPPINGS
-                    try:
-                        display_vendor = VendorType(session.vendor_type).name
-                    except Exception:
-                        display_vendor = str(session.vendor_type).upper()
-                    response_text = f"For {display_vendor}, use: {quick_cmd}"
-                    self.ai_response_received.emit(session_id, response_text)
+                    display_vendor = VendorType(session.vendor_type).name
+                except ValueError:
+                    display_vendor = str(session.vendor_type).upper()
+                
+                response_text = f"For {display_vendor}, use: `{quick_cmd}`"
+                self.ai_response_received.emit(session_id, response_text)
+                self.ai_suggestion_received.emit([quick_cmd])
+                self.ai_response_ended.emit()
+                self.ai_status_changed.emit("Idle", "AI query completed.")
+                return
 
-                    # Provide a small set of related suggestions
-                    suggestions = []
-                    try:
-                        vendor_enum = VendorType(session.vendor_type)
-                        for key in [
-                            "show_interfaces", "show_vlan", "show_version", "show_routing"
-                        ]:
-                            cmd = CROSS_VENDOR_MAPPINGS.get(key, {}).get(vendor_enum)
-                            if cmd:
-                                suggestions.append(cmd)
-                    except Exception:
-                        suggestions = []
-
-                    if suggestions:
-                        self.ai_suggestion_received.emit(suggestions)
-
-                    self.ai_response_ended.emit()
-                    self.ai_status_changed.emit("Idle", "AI query completed.")
-                    return
-                except Exception as e:
-                    logger.warning(f"Failed to format quick command response: {e}")
-            
-            # Fallback to richer processing with the full AI service
+            # Fallback to the full AI service for complex queries
+            from models.device_models import AIQuery, AIResponse
             ai_query = AIQuery(
                 session_id=session_id,
                 query=query,
@@ -570,7 +533,6 @@ class NetworkSwitchAIApp(QMainWindow):
             if response.suggestions:
                 self.ai_suggestion_received.emit(response.suggestions)
             
-            # Log interaction
             timestamp = datetime.utcnow().isoformat()
             self.ai_interaction_logged.emit(
                 session_id, query, response.response_text, ai_query.query_type, timestamp
@@ -581,42 +543,8 @@ class NetworkSwitchAIApp(QMainWindow):
             self.error_occurred.emit("AI Error", str(e))
             self.ai_status_changed.emit("Error", "AI query failed.")
         finally:
-            try:
-                self.ai_response_ended.emit()
-                self.ai_status_changed.emit("Idle", "AI query finished.")
-            except Exception:
-                pass
-                    if suggestions:
-                        self.ai_suggestion_received.emit(suggestions)
-                finally:
-                    try:
-                        self.ai_response_ended.emit()
-                    except Exception:
-                        pass
-                return
-
-            # Process using AI service for richer responses
-            from models.device_models import AIQuery
-            ai_query = AIQuery(
-                query=query,
-                vendor_type=session.vendor_type,
-                session_context={"context": context},
-                command_history=session.command_history or []
-            )
-            ai_response = await self.ai_service.process_query(ai_query)
-
-            logger.info("AI query processed successfully")
-            self.ai_response_received.emit(session_id, ai_response.response)
-            if getattr(ai_response, 'suggested_commands', None):
-                self.ai_suggestion_received.emit(ai_response.suggested_commands)
-            try:
-                self.ai_response_ended.emit()
-            except Exception:
-                pass
-            
-        except Exception as e:
-            logger.error(f"AI processing error: {e}")
-            self.error_occurred.emit("AI Error", str(e))
+            self.ai_response_ended.emit()
+            self.ai_status_changed.emit("Idle", "AI query finished.")
 
     def _auto_save(self):
         """Auto-save application state"""

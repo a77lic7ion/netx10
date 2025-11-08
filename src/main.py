@@ -22,31 +22,45 @@ from utils.logging import setup_logging
 
 def main():
     """Main application entry point"""
-    
-    # Setup logging
-    setup_logging()
-    
-    # Create QApplication
-    app = QApplication(sys.argv)
-    app.setApplicationName("NetworkSwitch AI Assistant")
-    app.setApplicationVersion("1.0.0")
-    app.setOrganizationName("NetIntelliX")
-    
-    # Set application style
-    app.setStyle("Fusion")
-    
-    # Create event loop
-    loop = QEventLoop(app)
-    asyncio.set_event_loop(loop)
-    
-    # Create and show main window
-    config = AppConfig()
-    main_window = NetworkSwitchAIApp(config)
-    main_window.show()
-    
-    # Run the application
-    with loop:
-        loop.run_forever()
+    try:
+        # Setup logging
+        print("Setting up logging...")
+        setup_logging()
+        print("Logging setup complete.")
+        
+        # Create QApplication
+        print("Creating QApplication...")
+        app = QApplication(sys.argv)
+        app.setApplicationName("NetworkSwitch AI Assistant")
+        app.setApplicationVersion("1.0.0")
+        app.setOrganizationName("NetIntelliX")
+        print("QApplication created.")
+        
+        # Set application style
+        app.setStyle("Fusion")
+        
+        # Create event loop
+        print("Creating event loop...")
+        loop = QEventLoop(app)
+        asyncio.set_event_loop(loop)
+        print("Event loop created.")
+        
+        # Create and show main window
+        print("Creating main window...")
+        config = AppConfig()
+        main_window = NetworkSwitchAIApp(config)
+        print("Main window created.")
+        main_window.show()
+        print("Main window shown.")
+        
+        # Run the application
+        with loop:
+            loop.run_forever()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

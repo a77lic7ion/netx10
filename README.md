@@ -1,9 +1,13 @@
 # NetworkSwitch AI Assistant  
 ### *Your Multi-Vendor Network Brain — Powered by AI*
 
-## Welcome
+## Banner
 
-![Welcome](screenshots/banner.png)
+![Banner](assets/banner.png)
+
+---
+
+## About
 
 
 [![Build Status](https://img.shields.io/badge/build-passing-00D26A?style=flat&logo=github)](https://github.com/a77lic7ion/netx10)

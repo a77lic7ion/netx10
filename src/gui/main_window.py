@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.application import NetworkSwitchAIApp
-from utils.logging import get_logger
+from utils.logging_utils import get_logger
 from .terminal_widget import TerminalWidget
 from .chat_widget import ChatWidget
 from .session_manager import SessionManagerWidget
