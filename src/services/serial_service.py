@@ -329,23 +329,31 @@ class SerialConnection:
         original_callback = self.response_callback
         # Also allow read loop to signal completion via _command_event
         self._command_event = response_event
+        # Capture the running loop for thread-safe signaling from the callback
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # Fallback: if no running loop (unlikely here), use default event loop
+            loop = asyncio.get_event_loop()
         
         # Callback must be synchronous because it is invoked via to_thread
         def command_response_handler(data: str):
             response_data.append(data)
             # If no vendor prompt patterns configured, consider first chunk as completion
             if not self.prompt_patterns:
-                response_event.set()
+                # Signal completion on the main loop to avoid cross-thread issues
+                loop.call_soon_threadsafe(response_event.set)
                 return
             # Check if response is complete (contains any configured prompt)
             try:
                 for pat in self.prompt_patterns:
                     if re.search(pat, data):
-                        response_event.set()
+                        # Signal completion on the main loop to avoid cross-thread issues
+                        loop.call_soon_threadsafe(response_event.set)
                         return
             except re.error:
                 # Fallback: set event to avoid hanging
-                response_event.set()
+                loop.call_soon_threadsafe(response_event.set)
         
         self.response_callback = command_response_handler
         

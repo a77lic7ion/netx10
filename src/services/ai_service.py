@@ -311,6 +311,107 @@ class AIService:
         if not mapping:
             return None
         return mapping.get(vendor_enum)
+
+    def map_config_intent_to_vendor_commands(self, query: str, vendor_type: str) -> Optional[Dict[str, Any]]:
+        """Detect simple configuration intents and return vendor-aware command sequences.
+
+        Currently supports VLAN creation like:
+        - "create vlan 70 named AP"
+        - "make a vlan 70 and call it AP"
+        - "add vlan id 70 name AP"
+
+        Returns a dict with keys: {"commands": List[str], "summary": str}
+        or None if no supported intent detected.
+        """
+        q = query.lower()
+
+        # Detect VLAN creation intent
+        vlan_intent_patterns = [
+            r"\b(create|make|add)\b.*\bvlan\b",
+            r"\bvlan\b.*\b(create|make|add)\b",
+        ]
+        if not any(re.search(p, q) for p in vlan_intent_patterns):
+            # Also match bare phrases like "vlan 70 name AP"
+            if not re.search(r"\bvlan\s*\d{1,4}\b", q):
+                return None
+
+        # Extract VLAN ID
+        vid_match = (
+            re.search(r"\bvlan\s*(?:id\s*)?(\d{1,4})", q)
+            or re.search(r"\b(\d{1,4})\b.*\bvlan\b", q)
+        )
+        if not vid_match:
+            return None
+        try:
+            vlan_id = int(vid_match.group(1))
+        except Exception:
+            return None
+
+        # Extract VLAN name (optional)
+        name_match = (
+            re.search(r"\b(name|named|call\s*it|label)\s*[\'\"]?([A-Za-z0-9_\-]+)[\'\"]?", q)
+        )
+        vlan_name = name_match.group(2) if name_match else None
+
+        # Resolve vendor enum
+        try:
+            vendor_enum = VendorType(vendor_type)
+        except Exception:
+            return None
+
+        # Build vendor-aware commands
+        commands: List[str] = []
+        summary_parts: List[str] = []
+        display_vendor = vendor_enum.name
+
+        if vendor_enum == VendorType.CISCO:
+            commands.extend([
+                "configure terminal",
+                f"vlan {vlan_id}",
+            ])
+            if vlan_name:
+                commands.append(f"name {vlan_name}")
+            commands.append("exit")
+            summary_parts.append("Cisco IOS: conf t → vlan → name → exit")
+        elif vendor_enum in (VendorType.H3C, VendorType.HUAWEI):
+            commands.extend([
+                "system-view",
+                f"vlan {vlan_id}",
+            ])
+            if vlan_name:
+                commands.append(f"description {vlan_name}")
+            commands.append("quit")
+            summary_parts.append("Comware/VRP: system-view → vlan → description → quit")
+        elif vendor_enum == VendorType.JUNIPER:
+            commands.extend([
+                "configure",
+                f"set vlans {vlan_name or f'VLAN{vlan_id}'} vlan-id {vlan_id}",
+                "commit",
+                "exit",
+            ])
+            summary_parts.append("JunOS: configure → set vlans → commit → exit")
+        else:
+            return None
+
+        # Suggest a verification command at the end
+        verify_cmd = {
+            VendorType.CISCO: "show vlan",
+            VendorType.H3C: "display vlan",
+            VendorType.HUAWEI: "display vlan",
+            VendorType.JUNIPER: "show vlans",
+        }.get(vendor_enum)
+        if verify_cmd:
+            commands.append(verify_cmd)
+
+        summary = (
+            f"Create VLAN {vlan_id}"
+            + (f" named {vlan_name}" if vlan_name else "")
+            + f" on {display_vendor}."
+        )
+        if summary_parts:
+            summary += " " + summary_parts[0]
+
+        return {"commands": commands, "summary": summary}
     
     def _detect_query_type(self, query: str, context: Optional[Dict[str, Any]] = None) -> AIPromptType:
         """Detect the type of query based on content"""

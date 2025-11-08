@@ -435,6 +435,25 @@ class NetworkSwitchAIApp(QMainWindow):
             except Exception:
                 pass
 
+            # First, detect simple config intents (e.g., VLAN creation) and provide sequences
+            try:
+                cfg_map = self.ai_service.map_config_intent_to_vendor_commands(query, session.vendor_type)
+            except Exception:
+                cfg_map = None
+
+            if cfg_map and isinstance(cfg_map, dict) and cfg_map.get("commands"):
+                response_text = cfg_map.get("summary") or "Generated configuration sequence."
+                self.ai_response_received.emit(session_id, response_text)
+                try:
+                    self.ai_suggestion_received.emit(cfg_map["commands"])  # show the sequence as suggestions
+                except Exception:
+                    pass
+                try:
+                    self.ai_response_ended.emit()
+                except Exception:
+                    pass
+                return
+
             # Quick vendor-specific mapping for common intents (e.g., running config)
             try:
                 quick_cmd = self.ai_service.map_query_to_vendor_command(query, session.vendor_type)
@@ -727,4 +746,3 @@ class NetworkSwitchAIApp(QMainWindow):
             self.error_occurred.emit("AI Error", "No active session")
             return
         self._create_tracked_task(self._process_ai_query(self._current_session_id, query, context))
-
