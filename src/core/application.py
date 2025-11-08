@@ -191,6 +191,9 @@ class NetworkSwitchAIApp(QMainWindow):
     
     async def _connect_device(self, com_port: str, vendor_type: str, baud_rate: int, username: str = "", password: str = ""):
         """Connect to network device"""
+        self.connection_status_changed.emit("Connecting", f"Connecting to {com_port}...")
+        logger.info(f"Attempting to connect to {com_port} at {baud_rate} baud.")
+
         try:
             logger.info(f"Connecting to {com_port} ({vendor_type}) at {baud_rate} baud")
             
@@ -210,6 +213,7 @@ class NetworkSwitchAIApp(QMainWindow):
 
             if success:
                 logger.info(f"Successfully connected to {com_port}")
+                self.connection_status_changed.emit("Connected", f"Connected to {com_port}")
                 self.session_created.emit(session.session_id, session.vendor_type)
 
                 # If enabled in UI, perform prompt-based credential sending
@@ -219,33 +223,47 @@ class NetworkSwitchAIApp(QMainWindow):
                         await self._perform_prompt_login(session.session_id, session.username or "", session.password or "")
                 except Exception as cli_err:
                     logger.warning(f"Prompt-based CLI login failed: {cli_err}")
+                    self.error_occurred.emit("Login Error", f"Automated login failed: {cli_err}")
             else:
                 logger.error(f"Failed to connect to {com_port}")
                 error_msg = session.error_message if session and session.error_message else f"Failed to connect to {com_port}"
                 self.error_occurred.emit("Connection Error", error_msg)
+                self.connection_status_changed.emit("Disconnected", f"Failed to connect to {com_port}")
+
         except Exception as e:
             logger.error(f"Connection error: {e}")
             self.error_occurred.emit("Connection Error", str(e))
+            self.connection_status_changed.emit("Disconnected", "Connection failed")
+        finally:
+            # In case of failure, ensure status is reset
+            # This is a fallback, success/fail cases should set it explicitly
+            pass
 
     async def _disconnect_device(self):
         """Disconnect from current device"""
         if not self._current_session_id:
             return
-        
+
+        session_id_to_disconnect = self._current_session_id
+        self.connection_status_changed.emit("Disconnecting", f"Disconnecting from session {session_id_to_disconnect}...")
+        logger.info(f"Disconnecting from session {session_id_to_disconnect}")
+
         try:
-            logger.info(f"Disconnecting from session {self._current_session_id}")
+            await self.session_service.disconnect_session(session_id_to_disconnect)
             
-            await self.session_service.disconnect_session(self._current_session_id)
-            
-            session_id = self._current_session_id
             self._current_session_id = None
             
             logger.info("Successfully disconnected")
-            self.session_ended.emit(session_id)
+            self.session_ended.emit(session_id_to_disconnect)
+            self.connection_status_changed.emit("Disconnected", "Disconnected")
             
         except Exception as e:
             logger.error(f"Disconnection error: {e}")
             self.error_occurred.emit("Disconnection Error", str(e))
+            self.connection_status_changed.emit("Disconnected", "Disconnection failed")
+        finally:
+            # Ensure session ID is cleared even if disconnection fails partway
+            self._current_session_id = None
 
     @Slot()
     def save_session(self):
