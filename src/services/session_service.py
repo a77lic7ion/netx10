@@ -212,6 +212,26 @@ class SessionService(QObject):
             self.session_error.emit(session_id, "Disconnection Error", str(e))
             return False
     
+    async def send_enter(self, session_id: str, char: str = '\n'):
+        """Send an enter character or other special character to the device."""
+        try:
+            session = self.active_sessions.get(session_id)
+            if not session:
+                raise ValueError(f"Session not found: {session_id}")
+
+            if session.status != SessionStatus.CONNECTED:
+                raise ValueError(f"Session not connected: {session_id}")
+
+            if not self.serial_service:
+                raise ValueError("Serial service not initialized")
+
+            await self.serial_service.write(session.com_port, char)
+            self.logger.info(f"Sent '{repr(char)}' to session {session_id}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to send enter to session {session_id}: {e}")
+            self.session_error.emit(session_id, "Send Error", str(e))
+
     async def execute_command(self, session_id: str, command: str) -> CommandResult:
         """Execute a command on the device"""
         try:

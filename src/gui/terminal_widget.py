@@ -338,13 +338,13 @@ class TerminalWidget(QWidget):
         # TODO: Implement export functionality
         QMessageBox.information(self, "Export", "Export functionality not implemented yet.")
 
-    def send_enter(self):
+    def send_enter(self, char: str = '\r'):
         """Send Enter to the device"""
-        self.app.send_enter()
+        self.app.send_enter(char)
 
     def send_ctrl_c(self):
         """Send Ctrl+C to the device"""
-        self.app.send_command('\x03')
+        self.app.send_enter('\x03')
 
     def fetch_device_info(self):
         """Fetch device info"""

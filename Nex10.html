@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus AI - Network Automation Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --card-bg: #141414;
+            --primary-color: #007BFF;
+            --text-color: #EAEAEA;
+            --text-muted: #888;
+            --border-color: #2a2a2a;
+            --font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family );
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        header h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -2px;
+            background: linear-gradient(90deg, #ffffff, #a0a0a0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .badges {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .badges img {
+            height: 28px;
+        }
+
+        .section {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            color: #b0b0b0;
+            text-align: center;
+            margin: -20px 0 40px;
+            padding: 0 20px;
+        }
+        
+        .main-image {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+
+        ul.features-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        ul.features-list li {
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        ul.features-list strong {
+            display: block;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        td code {
+            background-color: #282c34;
+            color: #61afef;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        pre {
+            background-color: #0e0e0e;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+        }
+
+        code.shell {
+            color: #98c379;
+        }
+        
+        .mermaid {
+            text-align: center;
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 8px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Nexus AI</h1>
+            <p class="subtitle">An intelligent desktop application for multi-vendor network automation and management.</p>
+            <div class="badges">
+                <a href="#"><img src="https://img.shields.io/badge/build-passing-4c1?style=for-the-badge&logo=github" alt="Build Status"></a>
+                <a href="#"><img src="https://img.shields.io/badge/version-1.0.0-09f?style=for-the-badge" alt="Version"></a>
+                <a href="#"><img src="https://img.shields.io/badge/license-MIT-555?style=for-the-badge" alt="License"></a>
+            </div>
+        </header>
+
+        <p class="intro-text">
+            <strong>Nexus AI</strong> is a sophisticated Windows application built for network professionals managing complex, multi-vendor environments. It combines a serial-based CLI terminal with a powerful AI assistant to revolutionize network automation, configuration, and troubleshooting.
+        </p>
+
+        <img src="https://i.imgur.com/97f2R6w.png" alt="Nexus AI Interface" class="main-image">
+
+        <div class="section">
+            <h2>✨ Core Features</h2>
+            <ul class="features-list">
+                <li>
+                    <strong>Unified Multi-Vendor Management</strong>
+                    Seamlessly control devices from Cisco, H3C, Juniper, and Huawei through a single interface.
+                </li>
+                <li>
+                    <strong>Intelligent CLI Terminal</strong>
+                    A feature-rich serial terminal with syntax highlighting, autocompletion, and command history.
+                </li>
+                <li>
+                    <strong>AI-Powered Assistant</strong>
+                    Leverage an integrated AI to generate commands, draft configurations, and diagnose network issues.
+                </li>
+                <li>
+                    <strong>Cross-Vendor Command Translation</strong>
+                    Instantly translate CLI commands between different vendor syntaxes (e.g., Cisco IOS to Juniper JunOS ).
+                </li>
+                <li>
+                    <strong>Advanced Session Management</strong>
+                    Effortlessly manage and switch between multiple concurrent device sessions.
+                </li>
+                <li>
+                    <strong>Configuration Templates</strong>
+                    Deploy standardized configurations quickly with a library of vendor-specific templates.
+                </li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🛠️ Technology Stack</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Technology</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Primary Language</td><td><code>Python 3.9+</code></td></tr>
+                    <tr><td>GUI Framework</td><td><code>PySide6 (Qt for Python)</code></td></tr>
+                    <tr><td>Network Automation</td><td><code>Netmiko 4.1.2+</code></td></tr>
+                    <tr><td>AI Integration</td><td><code>LangChain 0.1.0+</code></td></tr>
+                    <tr><td>Database</td><td><code>SQLite 3.35+</code></td></tr>
+                    <tr><td>Serial Communication</td><td><code>PySerial 3.5+</code></td></tr>
+                    <tr><td>Configuration Models</td><td><code>Pydantic 2.0+</code></td></tr>
+                    <tr><td>Asynchronous Operations</td><td><code>Asyncio with QAsync</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>🏗️ System Architecture</h2>
+            <div class="mermaid">
+                <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+                <script>mermaid.initialize({startOnLoad:true, theme: 'dark'} );</script>
+                <div class="mermaid">
+graph TD
+    subgraph Presentation Layer
+        A[Live CLI Terminal]
+        B[AI Chat Interface]
+        C[Session Manager]
+    end
+    subgraph Application Layer
+        D[Multi-Vendor Session Service]
+        E[Device Manager]
+        F[AI Agent Engine]
+    end
+    subgraph Vendor Abstraction Layer
+        G[Cisco IOS Handler]
+        H[H3C Comware Handler]
+        I[Juniper JunOS Handler]
+        J[Huawei VRP Handler]
+    end
+    subgraph Data Layer
+        K[SQLite Database]
+        L[Command History]
+        M[Configuration Templates]
+    end
+    subgraph Hardware Layer
+        N[Cisco Switches]
+        O[H3C Switches]
+        P[Juniper Switches]
+        Q[Huawei Switches]
+    end
+    A & B & C --> D & E & F
+    D & E & F --> G & H & I & J
+    G & H & I & J --> N & O & P & Q
+    D & E & F --> K & L & M
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🚀 Getting Started</h2>
+            <h3>Prerequisites</h3>
+            <p>Ensure you have Python 3.9+ and Pip installed on your system.</p>
+            
+            <h3>Installation</h3>
+            <p>1. Clone the repository:</p>
+            <pre><code class="shell">git clone https://github.com/YourUsername/Nexus-AI.git
+cd Nexus-AI</code></pre>
+
+            <p>2. Install dependencies:</p>
+            <pre><code class="shell">pip install -r requirements.txt</code></pre>
+
+            <p>3. Run the application:</p>
+            <pre><code class="shell">python src/main.py</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>🗺️ Development Roadmap</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Phase</th>
+                        <th>Timeline</th>
+                        <th>Key Deliverables</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Phase 1: Foundation</td><td>Weeks 1–4</td><td>Multi-vendor abstraction layer, device detection.</td></tr>
+                    <tr><td>Phase 2: Core Vendors</td><td>Weeks 5–8</td><td>Full implementation for Cisco, H3C, Juniper, Huawei.</td></tr>
+                    <tr><td>Phase 3: AI Integration</td><td>Weeks 9–12</td><td>Vendor-specific AI agents, command translation.</td></tr>
+                    <tr><td>Phase 4: Advanced Features</td><td>Weeks 13–16</td><td>Bulk operations, analytics, advanced templating.</td></tr>
+                    <tr><td>Phase 5: Polish & Deploy</td><td>Weeks 17–20</td><td>Final testing, documentation, and release packaging.</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            <p>This project is licensed under the MIT License. Copyright &copy; 2025 YourUsername.</p>
+        </footer>
+    </div>
+
+</body>
+</html>

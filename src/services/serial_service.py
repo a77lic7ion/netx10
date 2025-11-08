@@ -282,33 +282,31 @@ class SerialConnection:
     async def write(self, data: str) -> bool:
         """Write data to serial port"""
         if not self.is_connected or not self.writer:
+            self.logger.warning("Attempted to write while not connected.")
             return False
         
         try:
-            # Convert to bytes and add line ending if needed
-            if isinstance(data, str):
-                # Prefer CRLF for common network vendors that expect it
-                vendor_crlf = False
-                if self.vendor_type:
-                    if self.vendor_type in {"cisco", "h3c", "juniper", "huawei"}:
-                        vendor_crlf = True
-                if vendor_crlf:
-                    if not data.endswith('\r\n'):
-                        data = data.rstrip('\r\n') + '\r\n'
-                else:
-                    if not data.endswith('\n') and not data.endswith('\r'):
-                        data += '\n'
+            # Encode data to bytes. Handle special single characters like Ctrl+C correctly.
+            if isinstance(data, str) and len(data) == 1:
+                data_bytes = data.encode('utf-8')
+            elif isinstance(data, str):
+                # For commands, ensure they end with a newline.
+                if not data.endswith(('\n', '\r')):
+                    data += '\n'
                 data_bytes = data.encode('utf-8')
             else:
+                # Data is already in bytes.
                 data_bytes = data
             
             self.writer.write(data_bytes)
             await self.writer.drain()
             
             self.bytes_sent += len(data_bytes)
-            self.commands_sent += 1
+            # Only increment command count for actual commands, not single chars like Enter.
+            if len(data.strip()) > 1:
+                self.commands_sent += 1
             
-            self.logger.debug(f"Sent: {data.strip()}")
+            self.logger.debug(f"Sent: {repr(data)}")
             return True
             
         except Exception as e:

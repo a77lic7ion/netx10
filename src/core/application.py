@@ -690,13 +690,13 @@ class NetworkSwitchAIApp(QMainWindow):
             return
         await self._execute_command(self._current_session_id, command)
 
-    async def send_enter(self):
+    async def send_enter(self, char: str = '\r'):
         """Send raw newline to the device (simulate Enter)."""
         if not self._current_session_id:
             self.error_occurred.emit("Command Error", "No active session")
             return
         async with self._send_enter_lock:
-            result = await self.session_service.send_enter(self._current_session_id)
+            result = await self.session_service.send_enter(self._current_session_id, char)
         if not result.success:
             self.error_occurred.emit("Command Error", result.error or "Unknown error")
 

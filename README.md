@@ -1,61 +1,109 @@
-# NetIntelliX10
+# NetworkSwitch AI Assistant  
+### *Your Multi-Vendor Network Brain — Powered by AI*
 
-An intelligent network monitoring and analysis platform.
+![NetworkSwitch AI Hero Banner](https://raw.githubusercontent.com/YourUsername/NetworkSwitch-AI-Assistant/main/assets/banner.png)
 
-## Overview
+[![Build Status](https://img.shields.io/badge/build-passing-00D26A?style=flat&logo=github)](https://github.com/YourUsername/NetworkSwitch-AI-Assistant)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-0066FF?style=flat&logo=python)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/license-MIT-4CAF50?style=flat&logo=opensourceinitiative)](LICENSE)
 
-NetIntelliX10 is a comprehensive network intelligence platform designed to provide real-time monitoring, device management, and analytics for modern network infrastructures.
+> **One terminal. All vendors. AI-powered.**  
+> **Cisco • H3C • Juniper • Huawei** — *Unified, automated, intelligent.*
+
+---
+
+## Why NetworkSwitch AI?
+
+> **"I wish I had a senior network engineer in my pocket."**  
+> Now you do.
+
+- **No more CLI syntax chaos** across vendors  
+- **Ask in English** → Get perfect CLI  
+- **Translate configs** between Cisco ↔ Huawei ↔ Juniper  
+- **Automate faster**, debug smarter, deploy confidently
+
+---
+
+## Screenshots
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><b>Live CLI Terminal</b></td>
+      <td align="center"><b>AI Chat Assistant</b></td>
+      <td align="center"><b>Session Manager</b></td>
+    </tr>
+    <tr>
+      <td><img src="screenshots/cli.png" alt="CLI Terminal" width="300"/></td>
+      <td><img src="screenshots/ai-chat.png" alt="AI Chat" width="300"/></td>
+      <td><img src="screenshots/sessions.png" alt="Session Manager" width="300"/></td>
+    </tr>
+  </table>
+</div>
+
+---
 
 ## Features
 
-- **Real-time Network Monitoring**: Monitor network devices and traffic in real-time
-- **Device Management**: Discover, track, and manage network devices
-- **Analytics Dashboard**: Visualize network performance and trends
-- **Alert System**: Get notified of network issues and anomalies
-- **AI-Powered Insights**: Intelligent analysis and recommendations
+| Feature | Description |
+|-------|-----------|
+| **Multi-Vendor CLI** | Full support: **Cisco IOS, H3C Comware, Juniper JunOS, Huawei VRP** |
+| **Live Serial Terminal** | Syntax highlighting, autocomplete, command history |
+| **AI Copilot** | Natural language → **vendor-specific CLI** in seconds |
+| **Command Translation** | `show run` → `display current-configuration` — instantly |
+| **Config Templates** | Pre-built for VLANs, ACLs, QoS, OSPF, BGP, etc. |
+| **Multi-Session Tabs** | Manage 50+ devices with color-coded sessions |
 
-## Technology Stack
+---
 
-- **Backend**: Node.js with Express.js
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Database**: SQLite (development), PostgreSQL (production)
-- **Real-time**: WebSocket for live updates
-- **Charts**: Chart.js for data visualization
+## Tech Stack
 
-## Project Structure
+```yaml
+Language:     Python 3.9+
+GUI:          PySide6 (Qt6)
+Automation:   Netmiko 4.1.2+
+AI:           LangChain 0.1.0+
+Serial:       PySerial 3.5+
+Config:       Pydantic 2.0+
+Async:        Asyncio + QAsync
+Storage:      SQLite (local)
 
-```
-netx10/
-├── server.js          # Main server file
-├── package.json       # Project dependencies
-├── public/           # Static files
-│   ├── index.html   # Main dashboard
-│   ├── css/         # Stylesheets
-│   └── js/          # Client-side JavaScript
-├── routes/          # API routes
-├── models/          # Data models
-└── utils/           # Utility functions
-```
 
-## Getting Started
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+Getting Started
+Prerequisites
 
-2. Start the server:
-   ```bash
-   npm start
-   ```
+Python 3.9+
+pip
 
-3. Open your browser and navigate to `http://localhost:3000`
+Install & Run
 
-## Development
+# Clone the repo
+git clone https://github.com/YourUsername/NetworkSwitch-AI-Assistant.git
+cd NetworkSwitch-AI-Assistant
 
-- Run in development mode: `npm run dev`
-- Run tests: `npm test`
+# Install dependencies
+pip install -r requirements.txt
 
-## License
+# Launch
+python src/main.py
 
-MIT License
+Pro tip: Use a virtual environment
+
+python -m venv .venv && source .venv/bin/activate  # Linux/Mac
+.venv\Scripts\activate                            # Windows
+
+
+Phase,Timeline,Features
+1. Core,Weeks 1–4,"Vendor detection, session engine"
+2. Full Support,Weeks 5–8,100% CLI parity across 4 vendors
+3. AI Magic,Weeks 9–12,"Translation, diff, migration"
+4. Enterprise,Weeks 13–16,"Bulk ops, audit, analytics"
+5. Release,Weeks 17–20,".exe, auto-update, docs"
+
+License
+
+
+Built for network engineers who want to work smarter, not harder.
+⭐ Star this repo if you're ready to ditch CLI chaos!
+Star on GitHub: https://github.com/a77lic7ion/netx10
