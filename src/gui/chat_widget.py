@@ -324,6 +324,23 @@ class ChatWidget(QWidget):
         self.suggested_list.setMaximumHeight(200)
         self.suggested_list.itemDoubleClicked.connect(self.on_suggested_command_selected)
         suggested_layout.addWidget(self.suggested_list)
+
+        # Suggested command controls
+        controls_layout = QHBoxLayout()
+        self.run_selected_btn = QPushButton("Run Selected")
+        self.run_selected_btn.setToolTip("Send the selected command to the device")
+        self.run_selected_btn.clicked.connect(self.on_run_selected)
+        self.run_selected_btn.setEnabled(True)
+        controls_layout.addWidget(self.run_selected_btn)
+
+        self.run_all_btn = QPushButton("Run All")
+        self.run_all_btn.setToolTip("Send all suggested commands sequentially")
+        self.run_all_btn.clicked.connect(self.on_run_all)
+        self.run_all_btn.setEnabled(True)
+        controls_layout.addWidget(self.run_all_btn)
+
+        controls_layout.addStretch()
+        suggested_layout.addLayout(controls_layout)
         
         layout.addWidget(suggested_group)
         
@@ -364,28 +381,40 @@ class ChatWidget(QWidget):
         self.app.session_created.connect(self.on_session_created)
         self.app.session_ended.connect(self.on_session_ended)
     
-    @Slot(str, str, float)
-    def on_ai_response_received(self, query: str, response: str, confidence: float):
-        """Handle AI response received"""
-        self.add_ai_message(response, confidence)
-        
-        # Update response info
-        response_info = f"""
-Query Type: {self.query_type_combo.currentText()}
-Confidence: {confidence:.1f}%
-Response Time: {datetime.now().strftime('%H:%M:%S')}
-Context: {self.include_device_context.currentText()}
-        """.strip()
-        
-        self.response_info_text.setPlainText(response_info)
-        
+    @Slot(str, str)
+    def on_ai_response_received(self, session_id: str, response: str):
+        """Handle AI response received (matches app signal signature)."""
+        # Display AI message without confidence (not provided by signal)
+        self.add_ai_message(response)
+
+        # Gather lightweight context for info panel
+        vendor = None
+        model = None
+        try:
+            sess = self.app.active_sessions.get(self.app.current_session_id or session_id)
+            if sess:
+                vendor = getattr(sess, "vendor_type", None)
+                model = getattr(sess, "device_model", None)
+        except Exception:
+            pass
+
+        response_info_lines = [
+            f"Query Type: {self.query_type_combo.currentText()}",
+            f"Response Time: {datetime.now().strftime('%H:%M:%S')}",
+            f"Context: {self.include_device_context.currentText()}"
+        ]
+        if vendor:
+            response_info_lines.append(f"Vendor: {vendor}")
+        if model:
+            response_info_lines.append(f"Model: {model}")
+        self.response_info_text.setPlainText("\n".join(response_info_lines))
+
         # Add to message history
         self.message_history.append({
             "timestamp": datetime.now(),
             "type": "ai_response",
-            "query": query,
+            "session_id": session_id,
             "response": response,
-            "confidence": confidence,
             "query_type": self.query_type_combo.currentText()
         })
     
@@ -475,10 +504,65 @@ Context: {self.include_device_context.currentText()}
     
     @Slot(QListWidgetItem)
     def on_suggested_command_selected(self, item: QListWidgetItem):
-        """Handle suggested command selected"""
-        command = item.text()
-        self.query_input.setPlainText(f"Execute command: {command}")
-        self.on_send_query()
+        """Execute suggested command directly on the CLI for current session."""
+        command = item.text().strip()
+        if not command:
+            return
+        # Use common handler
+        self._send_command_to_device(command)
+
+    @Slot()
+    def on_run_selected(self):
+        """Run the currently selected suggested command."""
+        item = self.suggested_list.currentItem()
+        if not item:
+            return
+        command = item.text().strip()
+        if not command:
+            return
+        self._send_command_to_device(command)
+
+    @Slot()
+    def on_run_all(self):
+        """Run all suggested commands in sequence (with confirmation)."""
+        count = self.suggested_list.count()
+        if count == 0:
+            return
+        # Confirm execution of multiple commands
+        confirm = QMessageBox.question(
+            self,
+            "Run All Suggested Commands",
+            f"Send {count} commands to the device sequentially?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if confirm != QMessageBox.Yes:
+            return
+        # Execute sequentially
+        for i in range(count):
+            command = self.suggested_list.item(i).text().strip()
+            if not command:
+                continue
+            self._send_command_to_device(command)
+
+    def _send_command_to_device(self, command: str):
+        """Utility: push a command to the device if connected."""
+        # Connection check
+        try:
+            # app.current_session_id signals active connection in this UI
+            if not getattr(self.app, "current_session_id", None):
+                QMessageBox.warning(self, "Not Connected", "No active session. Connect a device first.")
+                return
+        except Exception:
+            pass
+
+        # Show in chat as a user action
+        self.add_user_message(f"Execute command: {command}")
+        # Send to device
+        try:
+            asyncio.create_task(self.app.send_command(command))
+        except Exception:
+            QMessageBox.critical(self, "Send Error", "Failed to send command to device.")
     
     def prepare_context(self) -> Dict[str, Any]:
         """Prepare context for AI query"""
@@ -488,16 +572,21 @@ Context: {self.include_device_context.currentText()}
             "current_session": self.current_session_id,
             "timestamp": datetime.now().isoformat()
         }
-        
-        # Add device context if available
-        if self.app.current_device:
-            context["device"] = {
-                "vendor": self.app.current_device.vendor,
-                "model": self.app.current_device.model,
-                "version": self.app.current_device.version
-            }
-        
-        # Add session context if requested
+
+        # Prefer session-derived device context (vendor, model, version)
+        try:
+            sess = self.app.active_sessions.get(self.app.current_session_id)
+            if sess:
+                context["device"] = {
+                    "vendor": getattr(sess, "vendor_type", None),
+                    "model": getattr(sess, "device_model", None),
+                    "version": getattr(sess, "os_version", None),
+                    "name": getattr(sess, "device_name", None),
+                }
+        except Exception:
+            pass
+
+        # Add session command history if requested
         if self.include_device_context.currentText() != "No Context":
             if self.include_device_context.currentText() == "Current Session":
                 session_commands = self.app.get_session_commands(self.current_session_id)

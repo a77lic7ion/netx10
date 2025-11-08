@@ -137,6 +137,12 @@ class TerminalWidget(QWidget):
         self.fetch_info_button.clicked.connect(self.fetch_device_info)
         self.fetch_info_button.setEnabled(False)
         controls_layout.addWidget(self.fetch_info_button)
+
+        # Ctrl+C button
+        self.ctrl_c_button = QPushButton("Ctrl+C")
+        self.ctrl_c_button.clicked.connect(self.send_ctrl_c)
+        self.ctrl_c_button.setEnabled(False)
+        controls_layout.addWidget(self.ctrl_c_button)
         
         layout.addLayout(controls_layout)
         
@@ -206,6 +212,8 @@ class TerminalWidget(QWidget):
             self.enter_button.setEnabled(connected)
         if hasattr(self, 'fetch_info_button'):
             self.fetch_info_button.setEnabled(connected)
+        if hasattr(self, 'ctrl_c_button'):
+            self.ctrl_c_button.setEnabled(connected)
         
         # Update prompt
         if connected:
@@ -331,21 +339,16 @@ class TerminalWidget(QWidget):
         QMessageBox.information(self, "Export", "Export functionality not implemented yet.")
 
     def send_enter(self):
-        """Send raw newline to the device"""
-        if not self.is_connected:
-            return
-        # Use app's tracked scheduling to avoid untracked coroutines
-        if hasattr(self.app, 'queue_enter'):
-            self.app.queue_enter()
-        else:
-            asyncio.create_task(self.app.send_enter())
+        """Send Enter to the device"""
+        self.app.send_enter()
+
+    def send_ctrl_c(self):
+        """Send Ctrl+C to the device"""
+        self.app.send_command('\x03')
 
     def fetch_device_info(self):
-        """Fetch device information from the device"""
-        if not self.is_connected:
-            QMessageBox.warning(self, "Not Connected", "Connect to a device first.")
-            return
-        asyncio.create_task(self.app.fetch_device_info())
+        """Fetch device info"""
+        self.app.fetch_device_info()
     
     def show_context_menu(self, position):
         """Show context menu"""
@@ -463,3 +466,4 @@ class TerminalWidget(QWidget):
     def is_command_input_focused(self) -> bool:
         """Check if command input is focused"""
         return self.command_input.hasFocus()
+
