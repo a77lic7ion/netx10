@@ -116,6 +116,9 @@ class AppConfig(BaseSettings):
     log_file: str = Field(default="logs/app.log", env="LOG_FILE")
     log_max_size: int = Field(default=10 * 1024 * 1024, env="LOG_MAX_SIZE")  # 10MB
     log_backup_count: int = Field(default=5, env="LOG_BACKUP_COUNT")
+
+    # Data directory for session exports and saves
+    data_dir: str = Field(default="data", env="DATA_DIR")
     
     # Pydantic v2 settings configuration
     model_config = SettingsConfigDict(
@@ -141,7 +144,8 @@ class AppConfig(BaseSettings):
             "resources/vendors/cisco",
             "resources/vendors/h3c",
             "resources/vendors/juniper",
-            "resources/vendors/huawei"
+            "resources/vendors/huawei",
+            self.data_dir
         ]
         
         for directory in directories:
@@ -164,7 +168,8 @@ class AppConfig(BaseSettings):
         # Local import to avoid NameError in environments where module-level imports
         # may be affected by load order or partial imports
         from datetime import datetime as _dt
-        env_path = env_path or getattr(self.Config, "env_file", ".env")
+        # Default to .env; do not rely on deprecated self.Config in pydantic v2
+        env_path = env_path or ".env"
         env_file = Path(env_path)
 
         # Read existing env entries
