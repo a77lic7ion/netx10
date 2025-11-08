@@ -275,12 +275,10 @@ class SessionService(QObject):
             if session.status != SessionStatus.CONNECTED:
                 raise ValueError(f"Session not connected: {session_id}")
 
-            # Send an empty command; SerialService will append newline
-            response = await self.serial_service.send_command(session.com_port, "")
-
-            success = response is not None
-            output = response or ""
-            error = "" if success else "No response or port not connected"
+            # Use raw write to ensure CR/LF is transmitted immediately
+            success = await self.serial_service.write_port(session.com_port, "\r\n")
+            output = ""
+            error = "" if success else "Write failed or port not connected"
             result = CommandResult(success=success, output=output, error=error, execution_time=0.0)
 
             # Emit signal to reflect interaction (using a placeholder command label)
@@ -298,6 +296,24 @@ class SessionService(QObject):
             error_result = CommandResult(success=False, output="", error=str(e), execution_time=0.0)
             self.session_error.emit(session_id, "Command Error", str(e))
             return error_result
+
+    async def write_to_session(self, session_id: str, data: str) -> bool:
+        """Directly write raw data to the device for the given session."""
+        try:
+            session = self.active_sessions.get(session_id)
+            if not session:
+                raise ValueError(f"Session not found: {session_id}")
+            if session.status != SessionStatus.CONNECTED:
+                raise ValueError(f"Session not connected: {session_id}")
+            ok = await self.serial_service.write_port(session.com_port, data)
+            if ok:
+                self.logger.debug(f"Raw write to session {session_id}: {repr(data)}")
+            else:
+                self.logger.warning(f"Raw write failed for session {session_id}: {repr(data)}")
+            return ok
+        except Exception as e:
+            self.logger.error(f"Raw write error for session {session_id}: {e}")
+            return False
 
     async def fetch_device_info(self, session_id: str) -> Dict[str, Any]:
         """Fetch and parse device information via vendor implementation.

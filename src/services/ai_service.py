@@ -516,8 +516,20 @@ class AIService:
                 self.logger.info("AI conversation memory cleared")
         except Exception as e:
             self.logger.error(f"Failed to clear AI memory: {e}")
+
+    def clear_conversation_memory(self) -> None:
+        """Synchronous wrapper to clear conversation memory.
+
+        Some callers operate in sync context (e.g., session load) and cannot await.
+        """
+        try:
+            if self.memory:
+                self.memory.clear()
+                self.logger.info("AI conversation memory cleared (sync)")
+        except Exception as e:
+            self.logger.error(f"Failed to clear AI memory (sync): {e}")
     
-    async def get_memory_summary(self) -> Dict[str, Any]:
+    def get_memory_summary(self) -> Dict[str, Any]:
         """Get summary of conversation memory"""
         try:
             if not self.memory:

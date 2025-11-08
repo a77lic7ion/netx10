@@ -606,6 +606,22 @@ class SerialService:
             text = str(data)
         # Reuse the string handler to keep logging and forwarding consistent
         self._on_connection_data(text)
+
+    async def write_port(self, port: str, data: str) -> bool:
+        """Directly write raw data to a connected port.
+
+        This bypasses command/response handling and is ideal for sending
+        keystrokes like Enter (CR/LF) and credentials during login prompts.
+        """
+        try:
+            connection = self.connections.get(port)
+            if not connection:
+                self.logger.error(f"No active connection for port: {port}")
+                return False
+            return await connection.write(data)
+        except Exception as e:
+            self.logger.error(f"Raw write error on {port}: {e}")
+            return False
     
     async def _connection_monitor(self):
         """Monitor connections and handle reconnections"""

@@ -92,9 +92,8 @@ class TerminalWidget(QWidget):
                 border-color: #0078d4;
             }
         """)
-        # Pressing Return in the command input should send a raw Enter
-        # to the device, matching the desired behavior.
-        self.command_input.returnPressed.connect(self.send_enter)
+        # Pressing Return submits the typed command; if empty, it sends Enter.
+        self.command_input.returnPressed.connect(self.on_command_entered)
         self.command_input.setEnabled(False)
         input_layout.addWidget(self.command_input)
         

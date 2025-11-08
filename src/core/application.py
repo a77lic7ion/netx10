@@ -361,14 +361,16 @@ class NetworkSwitchAIApp(QMainWindow):
         if username:
             username_prompts = ["username", "login:", "user:", "> username", "> login", "] username"]
             if await _wait_for_prompt(username_prompts, timeout=10.0):
-                await self.session_service.execute_command(session_id, username)
+                # Write username followed by Enter directly
+                await self.session_service.write_to_session(session_id, f"{username}\r\n")
                 await asyncio.sleep(0.3)
 
         # Password prompt
         if password:
             password_prompts = ["password", "passwd:"]
             if await _wait_for_prompt(password_prompts, timeout=10.0):
-                await self.session_service.execute_command(session_id, password)
+                # Write password followed by Enter directly
+                await self.session_service.write_to_session(session_id, f"{password}\r\n")
                 await asyncio.sleep(0.3)
 
         # Final enter to settle into CLI
