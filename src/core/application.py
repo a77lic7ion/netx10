@@ -81,7 +81,10 @@ class NetworkSwitchAIApp(QMainWindow):
             
             self.serial_service = SerialService(self.config.serial)
             self.session_service = SessionService(self.db, self.serial_service, self.config)
-            self.ai_service = AIService(self.config.ai)
+            self.ai_status_changed.emit("Initializing", "AI service is starting...")
+        self.ai_service = AIService(self.config.ai)
+        # Asynchronously initialize the AI service
+        self._create_tracked_task(self._initialize_ai_service())
 
             # Forward serial data to terminal output
             self.serial_service.data_listener = lambda data: self.terminal_data_received.emit(data)
@@ -139,6 +142,18 @@ class NetworkSwitchAIApp(QMainWindow):
 
         # Also reflect low-level serial connection changes directly
         self.serial_service.add_connection_listener(lambda port, connected: self.connection_status_changed.emit("Connected" if connected else "Disconnected", connected))
+    
+    async def _initialize_ai_service(self):
+        """Asynchronously initialize the AI service and update status."""
+        try:
+            initialized = await self.ai_service.initialize()
+            if initialized:
+                self.ai_status_changed.emit("Idle", "AI service is ready.")
+            else:
+                self.ai_status_changed.emit("Error", "AI service failed to initialize.")
+        except Exception as e:
+            logger.error(f"Unhandled error during AI service initialization: {e}")
+            self.ai_status_changed.emit("Error", "An unexpected error occurred during AI initialization.")
     
     def _setup_auto_save(self):
         """Setup auto-save functionality"""
@@ -420,6 +435,12 @@ class NetworkSwitchAIApp(QMainWindow):
 
     async def _process_ai_query(self, session_id: str, query: str, context: str):
         """Process AI query"""
+        if not self.ai_service.is_initialized():
+            self.error_occurred.emit("AI Error", "AI service is not available. Please check configuration.")
+            self.ai_status_changed.emit("Error", "AI service is not initialized.")
+            return
+
+        self.ai_status_changed.emit("Processing", f"Processing query: {query[:30]}...")
         try:
             logger.info(f"Processing AI query: {query}")
             
@@ -427,6 +448,7 @@ class NetworkSwitchAIApp(QMainWindow):
             session = await self.session_service.get_session(session_id)
             if not session:
                 self.error_occurred.emit("AI Error", "Session not found")
+                self.ai_status_changed.emit("Error", "Session not found.")
                 return
             
             # Notify UI that AI processing started
@@ -452,6 +474,7 @@ class NetworkSwitchAIApp(QMainWindow):
                     self.ai_response_ended.emit()
                 except Exception:
                     pass
+                self.ai_status_changed.emit("Idle", "AI query completed.")
                 return
 
             # Quick vendor-specific mapping for common intents (e.g., running config)
@@ -483,6 +506,48 @@ class NetworkSwitchAIApp(QMainWindow):
                                 suggestions.append(cmd)
                     except Exception:
                         suggestions = []
+
+                    if suggestions:
+                        self.ai_suggestion_received.emit(suggestions)
+
+                    self.ai_response_ended.emit()
+                    self.ai_status_changed.emit("Idle", "AI query completed.")
+                    return
+                except Exception as e:
+                    logger.warning(f"Failed to format quick command response: {e}")
+            
+            # Fallback to richer processing with the full AI service
+            ai_query = AIQuery(
+                session_id=session_id,
+                query=query,
+                context=context,
+                query_type=self.main_window.get_ai_query_type(),
+                vendor=session.vendor_type
+            )
+            
+            response: AIResponse = await self.ai_service.process_query(ai_query)
+            
+            self.ai_response_received.emit(session_id, response.response_text)
+            
+            if response.suggestions:
+                self.ai_suggestion_received.emit(response.suggestions)
+            
+            # Log interaction
+            timestamp = datetime.utcnow().isoformat()
+            self.ai_interaction_logged.emit(
+                session_id, query, response.response_text, ai_query.query_type, timestamp
+            )
+            
+        except Exception as e:
+            logger.error(f"AI query processing error: {e}")
+            self.error_occurred.emit("AI Error", str(e))
+            self.ai_status_changed.emit("Error", "AI query failed.")
+        finally:
+            try:
+                self.ai_response_ended.emit()
+                self.ai_status_changed.emit("Idle", "AI query finished.")
+            except Exception:
+                pass
                     if suggestions:
                         self.ai_suggestion_received.emit(suggestions)
                 finally:

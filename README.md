@@ -1,16 +1,16 @@
 # NetworkSwitch AI Assistant  
 ### *Your Multi-Vendor Network Brain — Powered by AI*
 
-![NetworkSwitch AI Hero Banner](https://raw.githubusercontent.com/YourUsername/NetworkSwitch-AI-Assistant/main/assets/banner.png)
+![NetworkSwitch AI Hero Banner](https://github.com/a77lic7ion/netx10/screenshots/banner.png)
 
-[![Build Status](https://img.shields.io/badge/build-passing-00D26A?style=flat&logo=github)](https://github.com/YourUsername/NetworkSwitch-AI-Assistant)
+[![Build Status](https://img.shields.io/badge/build-passing-00D26A?style=flat&logo=github)](https://github.com/a77lic7ion/netx10)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-0066FF?style=flat&logo=python)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-4CAF50?style=flat&logo=opensourceinitiative)](LICENSE)
 
 > **One terminal. All vendors. AI-powered.**  
 > **Cisco • H3C • Juniper • Huawei** — *Unified, automated, intelligent.*
 
----
+
 
 ## Why NetworkSwitch AI?
 
@@ -31,7 +31,7 @@
     <tr>
       <td align="center"><b>Live CLI Terminal</b></td>
       <td align="center"><b>AI Chat Assistant</b></td>
-      <td align="center"><b>Session Manager</b></td>
+      <td align="center"><b>Multi AI Agents</b></td>
     </tr>
     <tr>
       <td><img src="screenshots/cli.png" alt="CLI Terminal" width="300"/></td>
@@ -53,6 +53,8 @@
 | **Command Translation** | `show run` → `display current-configuration` — instantly |
 | **Config Templates** | Pre-built for VLANs, ACLs, QoS, OSPF, BGP, etc. |
 | **Multi-Session Tabs** | Manage 50+ devices with color-coded sessions |
+
+![Workflow](https://github.com/a77lic7ion/netx10/screenshots/workflow.png)
 
 ---
 
@@ -79,7 +81,7 @@ pip
 Install & Run
 
 # Clone the repo
-git clone https://github.com/YourUsername/NetworkSwitch-AI-Assistant.git
+git clone https://github.com/a77lic7ion/netx10.git
 cd NetworkSwitch-AI-Assistant
 
 # Install dependencies

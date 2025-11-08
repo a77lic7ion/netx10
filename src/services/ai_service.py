@@ -85,10 +85,14 @@ class AIService:
         self.memory = None
         # chains: str -> callable or chain object
         self.chains = {}
-        self.is_initialized = False
+        self._initialized = False
         self._is_processing = False
         # Fallback text history when LangChain memory is unavailable
         self._text_history: List[Dict[str, str]] = []
+
+    def is_initialized(self) -> bool:
+        """Check if the AI service is initialized."""
+        return self._initialized
 
     def is_processing(self) -> bool:
         """Check if the AI service is currently processing a query."""
@@ -96,6 +100,8 @@ class AIService:
         
     async def initialize(self) -> bool:
         """Initialize AI service with LangChain"""
+        self._is_processing = True
+        self._initialized = False
         try:
             # Initialize LLM (Ollama if available, otherwise mock)
             if _HAS_LANGCHAIN:
@@ -125,13 +131,16 @@ class AIService:
                 self.memory = None
                 # No chains available; processing will call llm.invoke directly
             
-            self.is_initialized = True
+            self._initialized = True
             self.logger.info(f"AI service initialized with model: {self.ai_config.model_name}")
-            return True
             
         except Exception as e:
             self.logger.error(f"Failed to initialize AI service: {e}")
-            return False
+            self._initialized = False
+        finally:
+            self._is_processing = False
+        
+        return self._initialized
     
     def _create_llm_instance(self, provider_name: str, config: ProviderConfig) -> Any:
         """Factory function to create an LLM instance based on provider"""
