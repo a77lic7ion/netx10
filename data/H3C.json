@@ -1,0 +1,27 @@
+{
+    "session_id": "af67669b-87f4-4acd-a038-703533d4f060",
+    "device_info": {
+        "vendor": "h3c",
+        "model": null,
+        "firmware": null,
+        "serial": null
+    },
+    "connection": {
+        "com_port": "COM7",
+        "baud_rate": 9600
+    },
+    "credentials": {
+        "username": "admin",
+        "password": "Afr1k@t1kkun!"
+    },
+    "status": "connected",
+    "created_at": "2025-11-08T06:38:22.831712",
+    "connected_at": "2025-11-08T08:38:22.907511",
+    "disconnected_at": null,
+    "commands": [],
+    "command_count": 0,
+    "ai_history": {
+        "message_count": 0,
+        "messages": []
+    }
+}
