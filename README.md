@@ -3,7 +3,10 @@
 
 ## Banner
 
-![Banner](screenshots/banner.png)
+![Banner](screenshots/
+banner.png)
+
+
 
 [![Build Status](https://img.shields.io/badge/build-passing-00D26A?style=flat&logo=github)](https://github.com/a77lic7ion/netx10)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-0066FF?style=flat&logo=python)](https://python.org)
