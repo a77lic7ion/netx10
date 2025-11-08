@@ -1,10 +1,9 @@
 # NetworkSwitch AI Assistant  
 ### *Your Multi-Vendor Network Brain — Powered by AI*
 
-## Banner
+## Welcome
 
-![Banner](screenshots/
-banner.png)
+![Welcome](screenshots/banner.png)
 
 
 
