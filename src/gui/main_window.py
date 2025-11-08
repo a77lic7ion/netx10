@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QTabWidget, QMenuBar, QStatusBar, QMessageBox, QProgressBar,
     QLabel, QPushButton, QComboBox, QTextEdit, QGroupBox,
     QFrame, QToolBar, QDockWidget, QListWidget, QListWidgetItem,
-    QFileDialog, QInputDialog, QLineEdit
+    QFileDialog, QInputDialog, QLineEdit, QCheckBox
 )
 from PySide6.QtCore import Qt, QTimer, Signal, Slot, QThread, QObject
 from PySide6.QtGui import QAction, QIcon, QFont, QTextCharFormat, QColor
@@ -238,6 +238,13 @@ class MainWindow(QMainWindow):
         self.password_edit.setPlaceholderText("Optional password")
         pass_layout.addWidget(self.password_edit)
         connection_layout.addLayout(pass_layout)
+
+        # Option: Send credentials to CLI for login
+        cli_login_layout = QHBoxLayout()
+        self.cli_login_checkbox = QCheckBox("Send credentials to CLI for login")
+        self.cli_login_checkbox.setToolTip("If enabled, after connecting the app will send the username and password directly to the device CLI.")
+        cli_login_layout.addWidget(self.cli_login_checkbox)
+        connection_layout.addLayout(cli_login_layout)
         
         # Connection buttons
         button_layout = QHBoxLayout()
@@ -649,6 +656,27 @@ class MainWindow(QMainWindow):
         
         return panel
     
+    def update_connection_form(self, session_data: dict):
+        """Update connection form with data from a loaded session JSON."""
+        # Connection: port and vendor
+        connection_info = session_data.get('connection', {})
+        device_info = session_data.get('device_info', {})
+
+        com_port = connection_info.get('com_port', '')
+        if com_port:
+            self.port_combo.setCurrentText(com_port)
+
+        vendor = device_info.get('vendor', '')
+        if vendor:
+            # Vendor combo contains capitalized names; normalize
+            self.vendor_combo.setCurrentText(str(vendor).capitalize())
+
+        # Credentials
+        credentials = session_data.get('credentials', {})
+        if isinstance(credentials, dict):
+            self.username_edit.setText(credentials.get('username', '') or '')
+            self.password_edit.setText(credentials.get('password', '') or '')
+
     def init_widgets(self):
         """Initialize widgets"""
         # Initialize widgets with application
@@ -694,3 +722,4 @@ Sessions: {len(self.app.session_service.active_sessions)}
             event.accept()
         else:
             event.ignore()
+

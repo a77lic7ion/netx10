@@ -242,9 +242,13 @@ class TerminalWidget(QWidget):
         if not self.is_connected:
             return
         
-        command = self.command_input.text().strip()
-        if not command:
+        raw_text = self.command_input.text()
+        # If input is empty, send an Enter keystroke to advance CLI
+        if not raw_text:
+            self.send_enter()
             return
+        
+        command = raw_text.strip()
         
         # Add to history
         if command not in self.command_history:
@@ -276,8 +280,7 @@ class TerminalWidget(QWidget):
         if hasattr(self.app, 'main_window'):
             self.app.main_window.command_sent.emit(session_id, command)
         
-        # Send through application
-        asyncio.create_task(self.app.send_command(command))
+        # Application handles scheduling via its tracked task mechanism
     
     @Slot(int)
     def on_history_selected(self, index: int):
@@ -330,7 +333,11 @@ class TerminalWidget(QWidget):
         """Send raw newline to the device"""
         if not self.is_connected:
             return
-        asyncio.create_task(self.app.send_enter())
+        # Use app's tracked scheduling to avoid untracked coroutines
+        if hasattr(self.app, 'queue_enter'):
+            self.app.queue_enter()
+        else:
+            asyncio.create_task(self.app.send_enter())
 
     def fetch_device_info(self):
         """Fetch device information from the device"""

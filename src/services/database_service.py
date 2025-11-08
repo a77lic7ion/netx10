@@ -530,6 +530,9 @@ class DatabaseService:
             if self.engine:
                 await self.engine.dispose()
                 self.logger.info("Database connection closed")
+        except (asyncio.CancelledError, GeneratorExit) as e:
+            # Graceful shutdown handling during event loop teardown
+            self.logger.info(f"Database close cancelled during shutdown: {e}")
         except Exception as e:
             self.logger.error(f"Error closing database connection: {e}")
 

@@ -49,6 +49,10 @@ class NetworkSwitchAIApp(QMainWindow):
         self._current_session_id: Optional[str] = None
         self.start_time = datetime.utcnow()
         self.current_device = None
+        # Track all asyncio tasks to allow graceful shutdown
+        self._pending_tasks: set[asyncio.Task] = set()
+        # Serialize Enter key dispatches to avoid concurrent coroutine reentry
+        self._send_enter_lock = asyncio.Lock()
         
         # Initialize services
         self._initialize_services()
@@ -153,22 +157,22 @@ class NetworkSwitchAIApp(QMainWindow):
     @Slot(str, str, int, str, str)
     def _handle_connect_request(self, com_port: str, vendor_type: str, baud_rate: int, username: str, password: str):
         """Handle connection request from UI, including optional credentials"""
-        asyncio.create_task(self._connect_device(com_port, vendor_type, baud_rate, username, password))
+        self._create_tracked_task(self._connect_device(com_port, vendor_type, baud_rate, username, password))
     
     @Slot()
     def _handle_disconnect_request(self):
         """Handle disconnection request from UI"""
-        asyncio.create_task(self._disconnect_device())
+        self._create_tracked_task(self._disconnect_device())
     
     @Slot(str, str)
     def _handle_command_sent(self, session_id: str, command: str):
         """Handle command sent from UI"""
-        asyncio.create_task(self._execute_command(session_id, command))
+        self._create_tracked_task(self._execute_command(session_id, command))
     
     @Slot(str, str, str)
     def _handle_ai_query(self, session_id: str, query: str, context: str):
         """Handle AI query from UI"""
-        asyncio.create_task(self._process_ai_query(session_id, query, context))
+        self._create_tracked_task(self._process_ai_query(session_id, query, context))
     
     async def _connect_device(self, com_port: str, vendor_type: str, baud_rate: int, username: str = "", password: str = ""):
         """Connect to network device"""
@@ -188,10 +192,18 @@ class NetworkSwitchAIApp(QMainWindow):
             
             # Connect to device
             success = await self.session_service.connect_session(session.session_id)
-            
+
             if success:
                 logger.info(f"Successfully connected to {com_port}")
                 self.session_created.emit(session.session_id, session.vendor_type)
+
+                # If enabled in UI, perform prompt-based credential sending
+                try:
+                    cli_login_enabled = hasattr(self.main_window, 'cli_login_checkbox') and self.main_window.cli_login_checkbox.isChecked()
+                    if cli_login_enabled:
+                        await self._perform_prompt_login(session.session_id, session.username or "", session.password or "")
+                except Exception as cli_err:
+                    logger.warning(f"Prompt-based CLI login failed: {cli_err}")
             else:
                 logger.error(f"Failed to connect to {com_port}")
                 error_msg = session.error_message if session and session.error_message else f"Failed to connect to {com_port}"
@@ -273,6 +285,13 @@ class NetworkSwitchAIApp(QMainWindow):
                 # For now, we'll just log the loaded data.
                 logger.info(f"Session loaded from {file_path}")
                 
+                # Populate connection form from loaded data if method exists
+                try:
+                    if hasattr(self.main_window, 'update_connection_form') and callable(getattr(self.main_window, 'update_connection_form')):
+                        self.main_window.update_connection_form(session_data)
+                except Exception as form_err:
+                    logger.warning(f"Failed to update connection form from session: {form_err}")
+                
                 # Example of restoring parts of the session
                 if 'session_id' in session_data:
                     self._current_session_id = session_data['session_id']
@@ -294,6 +313,69 @@ class NetworkSwitchAIApp(QMainWindow):
             except Exception as e:
                 logger.error(f"Failed to load session: {e}")
                 self._show_error("Load Error", f"Failed to load session: {e}")
+
+    async def _perform_prompt_login(self, session_id: str, username: str, password: str):
+        """Send credentials based on detected login prompts from terminal data."""
+        # Helper to wait for prompt text on terminal stream
+        async def _wait_for_prompt(substrs, timeout: float = 8.0) -> bool:
+            evt = asyncio.Event()
+            matched = {"hit": False}
+
+            def _on_data(data: str):
+                try:
+                    dl = data.lower()
+                    for s in substrs:
+                        if s in dl:
+                            matched["hit"] = True
+                            try:
+                                evt.set()
+                            except Exception:
+                                pass
+                            break
+                except Exception:
+                    pass
+
+            try:
+                self.terminal_data_received.connect(_on_data)
+                try:
+                    await asyncio.wait_for(evt.wait(), timeout=timeout)
+                except asyncio.TimeoutError:
+                    return False
+                return matched["hit"]
+            finally:
+                try:
+                    self.terminal_data_received.disconnect(_on_data)
+                except Exception:
+                    pass
+
+        # Nudge device to show prompts
+        try:
+            # Use a raw write for the initial "Enter" to avoid command timeouts
+            # if the device isn't immediately responsive with a prompt.
+            await self.session_service.write_to_session(session_id, "\r\n")
+            await asyncio.sleep(0.3)
+        except Exception as e:
+            logger.warning(f"Failed to send initial Enter nudge: {e}")
+
+        # Username prompt
+        if username:
+            username_prompts = ["username", "login:", "user:", "> username", "> login", "] username"]
+            if await _wait_for_prompt(username_prompts, timeout=10.0):
+                await self.session_service.execute_command(session_id, username)
+                await asyncio.sleep(0.3)
+
+        # Password prompt
+        if password:
+            password_prompts = ["password", "passwd:"]
+            if await _wait_for_prompt(password_prompts, timeout=10.0):
+                await self.session_service.execute_command(session_id, password)
+                await asyncio.sleep(0.3)
+
+        # Final enter to settle into CLI
+        try:
+            await self.session_service.send_enter(session_id)
+        except Exception:
+            pass
 
     @Slot(str)
     def _on_session_connected(self, session_id: str):
@@ -376,13 +458,29 @@ class NetworkSwitchAIApp(QMainWindow):
         try:
             logger.info("Application closing...")
             
+            disconnect_task = None
+            close_task = None
+
             # Disconnect any active sessions
             if self._current_session_id:
-                asyncio.create_task(self._disconnect_device())
+                disconnect_task = self._create_tracked_task(self._disconnect_device())
             
             # Save application state
             if self._services_initialized:
-                self.db.close()
+                # Ensure database close runs in the event loop if it's async
+                try:
+                    close_task = self._create_tracked_task(self.db.close())
+                except TypeError:
+                    # Fallback if close is synchronous
+                    self.db.close()
+
+                # Cancel any other pending tasks to avoid "Task was destroyed" warnings
+                for t in list(self._pending_tasks):
+                    if t is not disconnect_task and t is not close_task:
+                        try:
+                            t.cancel()
+                        except Exception as e:
+                            logger.warning(f"Failed to cancel task {t}: {e}")
             
             logger.info("Application closed successfully")
             event.accept()
@@ -390,6 +488,13 @@ class NetworkSwitchAIApp(QMainWindow):
         except Exception as e:
             logger.error(f"Error during application shutdown: {e}")
             event.accept()
+
+    def _create_tracked_task(self, coro) -> asyncio.Task:
+        """Create and track an asyncio task to manage lifecycle and shutdown."""
+        task = asyncio.create_task(coro)
+        self._pending_tasks.add(task)
+        task.add_done_callback(lambda t: self._pending_tasks.discard(t))
+        return task
 
     @property
     def current_session_id(self) -> Optional[str]:
@@ -412,17 +517,32 @@ class NetworkSwitchAIApp(QMainWindow):
     def get_session_commands(self, session_id: str):
         """Get command history for a session"""
         session = self.session_service.active_sessions.get(session_id)
-        if session:
-            return [
-                {
+        if not session:
+            return []
+        results = []
+        for cmd in session.commands:
+            if hasattr(cmd, "command"):
+                results.append({
                     "command": cmd.command,
-                    "output": cmd.output,
-                    "timestamp": cmd.timestamp.isoformat(),
-                    "success": cmd.success
-                }
-                for cmd in session.commands
-            ]
-        return []
+                    "output": getattr(cmd, "output", ""),
+                    "timestamp": cmd.timestamp.isoformat() if hasattr(cmd, "timestamp") else datetime.utcnow().isoformat(),
+                    "success": getattr(cmd, "success", True)
+                })
+            elif isinstance(cmd, dict):
+                results.append({
+                    "command": cmd.get("command", ""),
+                    "output": cmd.get("output", ""),
+                    "timestamp": cmd.get("timestamp", datetime.utcnow().isoformat()),
+                    "success": cmd.get("success", True)
+                })
+            elif isinstance(cmd, str):
+                results.append({
+                    "command": cmd,
+                    "output": "",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "success": True
+                })
+        return results
 
     def get_session_ai_interactions(self, session_id: str):
         """Get AI interactions for a session"""
@@ -433,27 +553,31 @@ class NetworkSwitchAIApp(QMainWindow):
     def export_session(self, session_id: str):
         """Export session data"""
         session = self.session_service.active_sessions.get(session_id)
-        if session:
-            return {
-                "session_id": session.session_id,
-                "device_info": {
-                    "vendor": session.device_info.vendor_type.value,
-                    "model": session.device_info.model,
-                    "firmware": session.device_info.firmware_version,
-                    "serial": session.device_info.serial_number
-                },
-                "connection": {
-                    "com_port": session.com_port,
-                    "baud_rate": session.baud_rate
-                },
-                "status": session.status.value,
-                "created_at": session.created_at.isoformat(),
-                "connected_at": session.connected_at.isoformat() if session.connected_at else None,
-                "disconnected_at": session.disconnected_at.isoformat() if session.disconnected_at else None,
-                "commands": self.get_session_commands(session_id),
-                "command_count": len(session.commands)
-            }
-        return None
+        if not session:
+            return None
+        return {
+            "session_id": session.session_id,
+            "device_info": {
+                "vendor": session.vendor_type,
+                "model": getattr(session, "device_model", None),
+                "firmware": getattr(session, "os_version", None),
+                "serial": (session.vendor_specific_data.get("serial_number") if isinstance(getattr(session, "vendor_specific_data", None), dict) else None)
+            },
+            "connection": {
+                "com_port": session.com_port,
+                "baud_rate": session.baud_rate
+            },
+            "credentials": {
+                "username": getattr(session, "username", None),
+                "password": getattr(session, "password", None)
+            },
+            "status": session.status.value if hasattr(session.status, "value") else str(session.status),
+            "created_at": session.start_time.isoformat() if getattr(session, "start_time", None) else datetime.utcnow().isoformat(),
+            "connected_at": session.connected_at.isoformat() if session.connected_at else None,
+            "disconnected_at": session.disconnected_at.isoformat() if session.disconnected_at else None,
+            "commands": self.get_session_commands(session_id),
+            "command_count": len(session.commands)
+        }
 
     async def create_session(self, session_name: str):
         """Create a new session"""
@@ -495,9 +619,14 @@ class NetworkSwitchAIApp(QMainWindow):
         if not self._current_session_id:
             self.error_occurred.emit("Command Error", "No active session")
             return
-        result = await self.session_service.send_enter(self._current_session_id)
+        async with self._send_enter_lock:
+            result = await self.session_service.send_enter(self._current_session_id)
         if not result.success:
             self.error_occurred.emit("Command Error", result.error or "Unknown error")
+
+    def queue_enter(self):
+        """Schedule sending Enter using tracked tasks."""
+        self._create_tracked_task(self.send_enter())
 
     async def fetch_device_info(self) -> Dict[str, Any]:
         """Fetch device info for the current session and allow naming."""
@@ -509,15 +638,18 @@ class NetworkSwitchAIApp(QMainWindow):
         if not info:
             self.error_occurred.emit("Device Info Error", "Failed to retrieve device information")
             return {}
-
-        summary = (
-            f"Device Model: {info.get('device_model') or 'N/A'}\n"
-            f"OS Version: {info.get('os_version') or 'N/A'}\n"
-            f"Serial Number: {info.get('serial_number') or 'N/A'}\n"
-            f"Hostname: {info.get('hostname') or 'N/A'}\n"
-            f"Uptime: {info.get('uptime') or 'N/A'}\n"
-        )
-        self.terminal_data_received.emit(summary)
+        raw = info.get("raw_output")
+        if raw:
+            self.terminal_data_received.emit(raw)
+        else:
+            summary = (
+                f"Device Model: {info.get('device_model') or 'N/A'}\n"
+                f"OS Version: {info.get('os_version') or 'N/A'}\n"
+                f"Serial Number: {info.get('serial_number') or 'N/A'}\n"
+                f"Hostname: {info.get('hostname') or 'N/A'}\n"
+                f"Uptime: {info.get('uptime') or 'N/A'}\n"
+            )
+            self.terminal_data_received.emit(summary)
 
         # Optional: auto-apply hostname as device name if empty (no UI prompt here)
         try:
@@ -531,4 +663,4 @@ class NetworkSwitchAIApp(QMainWindow):
             logger.error(f"Device name persistence error: {e}")
 
         return info
-
+

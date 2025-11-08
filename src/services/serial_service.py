@@ -51,6 +51,8 @@ class SerialConnection:
         self.receive_buffer = ""
         self.response_callback: Optional[Callable[[str], None]] = None
         self.data_callback: Optional[Callable[[bytes], None]] = None
+        # Per-command completion signaling (used by send_command)
+        self._command_event: Optional[asyncio.Event] = None
         
         # Statistics
         self.bytes_sent = 0
@@ -176,29 +178,60 @@ class SerialConnection:
                     # Read available data
                     data = await self.reader.read(1024)
                     
-                    if data:
-                        self.bytes_received += len(data)
-                        
-                        # Handle raw data callback
-                        if self.data_callback:
-                            await asyncio.to_thread(self.data_callback, data)
-                        
-                        # Process text data
+                    if not data:
+                        continue
+
+                    self.bytes_received += len(data)
+                    
+                    # Handle raw data callback
+                    if self.data_callback:
+                        try:
+                            self.data_callback(data)
+                        except Exception as cb_err:
+                            self.logger.error(f"Data callback error: {cb_err!r}")
+                            self.errors_count += 1
+                    
+                    # Process text data
+                    try:
                         text_data = data.decode('utf-8', errors='ignore')
-                        self.receive_buffer += text_data
-                        
-                        # Check for complete responses
+                    except Exception as dec_err:
+                        self.logger.error(f"Decode error: {dec_err!r}")
+                        text_data = ""
+                    self.receive_buffer += text_data
+                    
+                    # Check for complete responses
+                    try:
                         await self._process_receive_buffer()
-                        
+                    except Exception as proc_err:
+                        # Never let buffer processing kill the read loop
+                        self.logger.error(f"Buffer processing error: {proc_err!r}")
+                        self.errors_count += 1
+                        await asyncio.sleep(0.05)
+                        continue
+                
                 except asyncio.TimeoutError:
+                    continue
+                except AssertionError as e:
+                    # Some serial backends may raise AssertionError on edge cases; don't drop connection
+                    self.logger.error(f"Serial read assertion: {e!r}")
+                    self.errors_count += 1
+                    self.receive_buffer = ""  # Clear buffer to prevent getting stuck
+                    await asyncio.sleep(0.05)
                     continue
                 except serial.SerialException as e:
                     self.logger.error(f"Serial read error: {e}")
                     self.errors_count += 1
                     break
+                except Exception as e:
+                    # Keep the loop alive on unexpected errors to avoid immediate disconnects
+                    self.logger.error(f"Unexpected read error: {e!r}")
+                    self.errors_count += 1
+                    await asyncio.sleep(0.05)
+                    continue
                     
         except Exception as e:
-            self.logger.error(f"Read loop error: {e}")
+            # Include exception type for better diagnostics
+            self.logger.error(f"Read loop error: {e!r}")
             self.errors_count += 1
         finally:
             await self.disconnect()
@@ -220,11 +253,19 @@ class SerialConnection:
                 response_text = self.receive_buffer[:earliest_match.start()].strip()
 
                 if response_text and self.response_callback:
-                    await asyncio.to_thread(self.response_callback, response_text)
-                    self.responses_received += 1
+                    try:
+                        # Run callback in a thread to avoid blocking the read loop
+                        await asyncio.to_thread(self.response_callback, response_text)
+                    except Exception as e:
+                        self.logger.error(f"Response callback failed: {e!r}")
+                    finally:
+                        self.responses_received += 1
 
                 # Keep the prompt for next command
                 self.receive_buffer = self.receive_buffer[earliest_match.end():]
+                # Signal command completion for send_command waiters
+                if self._command_event and not self._command_event.is_set():
+                    self._command_event.set()
         
         # Handle line-by-line processing for real-time output
         lines = self.receive_buffer.split('\n')
@@ -246,8 +287,17 @@ class SerialConnection:
         try:
             # Convert to bytes and add line ending if needed
             if isinstance(data, str):
-                if not data.endswith('\n') and not data.endswith('\r'):
-                    data += '\n'
+                # Prefer CRLF for common network vendors that expect it
+                vendor_crlf = False
+                if self.vendor_type:
+                    if self.vendor_type in {"cisco", "h3c", "juniper", "huawei"}:
+                        vendor_crlf = True
+                if vendor_crlf:
+                    if not data.endswith('\r\n'):
+                        data = data.rstrip('\r\n') + '\r\n'
+                else:
+                    if not data.endswith('\n') and not data.endswith('\r'):
+                        data += '\n'
                 data_bytes = data.encode('utf-8')
             else:
                 data_bytes = data
@@ -277,6 +327,8 @@ class SerialConnection:
         
         # Set up temporary response handler
         original_callback = self.response_callback
+        # Also allow read loop to signal completion via _command_event
+        self._command_event = response_event
         
         # Callback must be synchronous because it is invoked via to_thread
         def command_response_handler(data: str):
@@ -318,6 +370,8 @@ class SerialConnection:
         finally:
             # Restore original callback
             self.response_callback = original_callback
+            # Clear command event
+            self._command_event = None
     
     async def disconnect(self):
         """Disconnect from serial port"""

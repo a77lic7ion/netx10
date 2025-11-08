@@ -1,7 +1,9 @@
 import uuid
 from typing import Dict, List, Optional, Any
+import asyncio
 from datetime import datetime
 from PySide6.QtCore import QObject, Signal, Slot
+import re
 
 
 from services.database_service import DatabaseService
@@ -245,6 +247,10 @@ class SessionService(QObject):
             self.logger.info(f"Command executed in session {session_id}: {command}")
             
             return result
+        except (asyncio.CancelledError, GeneratorExit) as e:
+            # Graceful handling during shutdown or task cancellation
+            self.logger.info(f"Command execution cancelled for session {session_id}: {e}")
+            return CommandResult(success=False, output="", error="Cancelled", execution_time=0.0)
             
         except Exception as e:
             self.logger.error(f"Command execution error for session {session_id}: {e}")
@@ -283,6 +289,10 @@ class SessionService(QObject):
 
             self.logger.info(f"Sent ENTER in session {session_id}")
             return result
+        except (asyncio.CancelledError, GeneratorExit) as e:
+            # Graceful handling during shutdown or task cancellation
+            self.logger.info(f"Send ENTER cancelled for session {session_id}: {e}")
+            return CommandResult(success=False, output="", error="Cancelled", execution_time=0.0)
         except Exception as e:
             self.logger.error(f"Send ENTER error for session {session_id}: {e}")
             error_result = CommandResult(success=False, output="", error=str(e), execution_time=0.0)
@@ -306,20 +316,28 @@ class SessionService(QObject):
                 # Accept raw strings already matching enum values
                 vendor_enum = VendorType[session.vendor_type.upper()] if isinstance(session.vendor_type, str) else session.vendor_type
 
-            vendor = self.vendor_factory.create_vendor(vendor_enum)
-            if not vendor:
-                raise ValueError(f"Unsupported vendor type: {session.vendor_type}")
-
-            # Delegate to vendor-specific implementation
-            device_info_obj = await vendor.get_device_info()
-            # Convert to dict
-            info_dict: Dict[str, Any] = {
-                "device_model": getattr(device_info_obj, "device_model", None),
-                "os_version": getattr(device_info_obj, "os_version", None),
-                "serial_number": getattr(device_info_obj, "serial_number", None),
-                "hostname": getattr(device_info_obj, "hostname", None),
-                "uptime": getattr(device_info_obj, "uptime", None),
-            }
+            # For H3C, run the real CLI and parse manufacturing info
+            if vendor_enum == VendorType.H3C:
+                raw = await self.serial_service.send_command(session.com_port, "dis dev manu")
+                raw_output = raw or ""
+                info_dict = self._parse_h3c_manufacturing_info(raw_output)
+                info_dict["raw_output"] = raw_output
+                # Emit raw output so UI mirrors device CLI exactly
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                self.command_executed.emit(session_id, "dis dev manu", raw_output, timestamp)
+            else:
+                # Fallback to vendor implementation (currently mocked for non-Cisco/H3C)
+                vendor = self.vendor_factory.create_vendor(vendor_enum)
+                if not vendor:
+                    raise ValueError(f"Unsupported vendor type: {session.vendor_type}")
+                device_info_obj = await vendor.get_device_info()
+                info_dict = {
+                    "device_model": getattr(device_info_obj, "device_model", None),
+                    "os_version": getattr(device_info_obj, "os_version", None),
+                    "serial_number": getattr(device_info_obj, "serial_number", None),
+                    "hostname": getattr(device_info_obj, "hostname", None),
+                    "uptime": getattr(device_info_obj, "uptime", None),
+                }
 
             # Update session fields for persistence
             session.device_model = info_dict.get("device_model")
@@ -332,23 +350,60 @@ class SessionService(QObject):
             # Persist using Pydantic DB model mapping
             await self.db.update_session(self._to_db_session(session))
 
-            # Emit a synthetic event indicating info retrieval
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            pretty_output = (
-                f"Model: {info_dict.get('device_model') or 'N/A'}\n"
-                f"OS: {info_dict.get('os_version') or 'N/A'}\n"
-                f"Serial: {info_dict.get('serial_number') or 'N/A'}\n"
-                f"Hostname: {info_dict.get('hostname') or 'N/A'}\n"
-                f"Uptime: {info_dict.get('uptime') or 'N/A'}"
-            )
-            self.command_executed.emit(session_id, "fetch_device_info", pretty_output, timestamp)
-
             self.logger.info(f"Fetched device info for session {session_id}: {info_dict}")
             return info_dict
         except Exception as e:
             self.logger.error(f"Fetch device info error for session {session_id}: {e}")
             self.session_error.emit(session_id, "Device Info Error", str(e))
             return {}
+
+    def _parse_h3c_manufacturing_info(self, output: str) -> Dict[str, Any]:
+        """Parse H3C 'display device manu' output into structured fields.
+
+        Expected lines like:
+          DEVICE_NAME          : S5048PV5-EI-PWR
+          DEVICE_SERIAL_NUMBER : 219801A4199256Q0001K
+          MAC_ADDRESS          : 30F5-27CF-3FAA
+          MANUFACTURING_DATE   : 2025-06-21
+          VENDOR_NAME          : H3C
+          PRODUCT_ID           : LS-5048PV5-EI-PWR-GL
+        And optional prompt line: [HOSTNAME]
+        """
+        lines = [l.strip() for l in output.splitlines()]
+        kv = {}
+        for line in lines:
+            # Match KEY : VALUE pairs with arbitrary spacing
+            m = re.match(r"^([A-Z_ ]+):\s*(.+)$", line)
+            if not m:
+                # Some outputs may align with multiple spaces before ':'
+                m = re.match(r"^([A-Z_ ]+)\s*:\s*(.+)$", line)
+            if m:
+                key = m.group(1).strip()
+                val = m.group(2).strip()
+                kv[key] = val
+
+        # Extract hostname from bracketed prompt
+        hostname = None
+        for line in lines[::-1]:
+            hm = re.search(r"\[([^\]]+)\]", line)
+            if hm:
+                hostname = hm.group(1).strip()
+                break
+
+        info = {
+            "device_model": kv.get("DEVICE_NAME"),
+            "os_version": None,  # Not provided by manufacturing info
+            "serial_number": kv.get("DEVICE_SERIAL_NUMBER"),
+            "hostname": hostname,
+            "uptime": None,  # Not provided here
+            "vendor_specific": {
+                "mac_address": kv.get("MAC_ADDRESS"),
+                "manufacturing_date": kv.get("MANUFACTURING_DATE"),
+                "vendor_name": kv.get("VENDOR_NAME"),
+                "product_id": kv.get("PRODUCT_ID"),
+            }
+        }
+        return info
     
     async def get_session(self, session_id: str) -> Optional[Session]:
         """Get session by ID"""
