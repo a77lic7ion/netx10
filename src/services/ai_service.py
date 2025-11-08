@@ -50,7 +50,7 @@ except Exception:
             return f"[mock-llm] Received prompt: {prompt[:200]}"
 
 from core.config import AppConfig, AIConfig, ProviderConfig
-from core.constants import AIPromptType, VENDOR_AI_PROMPTS, AI_SYSTEM_PROMPTS
+from core.constants import AIPromptType, VENDOR_AI_PROMPTS, AI_SYSTEM_PROMPTS, CROSS_VENDOR_MAPPINGS, VendorType
 from models.device_models import AIQuery, AIResponse
 from utils.logging import get_logger
 
@@ -87,6 +87,8 @@ class AIService:
         self.chains = {}
         self.is_initialized = False
         self._is_processing = False
+        # Fallback text history when LangChain memory is unavailable
+        self._text_history: List[Dict[str, str]] = []
 
     def is_processing(self) -> bool:
         """Check if the AI service is currently processing a query."""
@@ -248,6 +250,67 @@ class AIService:
         except Exception as e:
             self.logger.error(f"Failed to initialize AI chains: {e}")
             raise
+
+    def map_query_to_vendor_command(self, query: str, vendor_type: str) -> Optional[str]:
+        """Map a natural-language query to a vendor-specific CLI command.
+
+        Supports common intents like viewing running configuration, interfaces, VLANs, version, and routing.
+        Returns the single best-fit command for the given vendor or None if no match.
+        """
+        q = query.lower()
+
+        # Intent detection via keyword patterns
+        intent_patterns = {
+            "show_running_config": [
+                r"running\s*config",
+                r"current\s*configuration",
+                r"see\s*(the\s*)?config",
+                r"show\s*(the\s*)?config",
+                r"view\s*(the\s*)?config",
+            ],
+            "show_interfaces": [
+                r"interfaces?\b",
+                r"ports?\b",
+                r"link\s*status",
+                r"interface\s*status",
+            ],
+            "show_vlan": [
+                r"vlan[s]?\b",
+                r"switching\s*vlans",
+                r"vlan\s*table",
+            ],
+            "show_version": [
+                r"version\b",
+                r"os\s*version",
+                r"software\s*version",
+                r"platform\s*info",
+            ],
+            "show_routing": [
+                r"routing\b",
+                r"route\b",
+                r"routing\s*table",
+            ],
+        }
+
+        matched_intent: Optional[str] = None
+        for intent, patterns in intent_patterns.items():
+            if any(re.search(p, q) for p in patterns):
+                matched_intent = intent
+                break
+
+        if not matched_intent:
+            return None
+
+        # Resolve vendor enum
+        try:
+            vendor_enum = VendorType(vendor_type)
+        except Exception:
+            return None
+
+        mapping = CROSS_VENDOR_MAPPINGS.get(matched_intent)
+        if not mapping:
+            return None
+        return mapping.get(vendor_enum)
     
     def _detect_query_type(self, query: str, context: Optional[Dict[str, Any]] = None) -> AIPromptType:
         """Detect the type of query based on content"""
@@ -342,7 +405,13 @@ class AIService:
             # If langchain unavailable, fall back to direct invoke on llm
             if not _HAS_LANGCHAIN or chain is None:
                 system_prompt = AI_SYSTEM_PROMPTS.get(query_type, "")
-                prompt_text = f"{system_prompt}\n\nUser: {query.query}\n"
+                # Include simple text history when LangChain memory isn't available
+                history_text = ""
+                if self._text_history:
+                    recent = self._text_history[-8:]
+                    formatted = "\n".join([f"{m['role'].capitalize()}: {m['text']}" for m in recent])
+                    history_text = f"\nConversation context:\n{formatted}\n"
+                prompt_text = f"{system_prompt}{history_text}\n\nUser: {query.query}\n"
                 response = await asyncio.to_thread(self.llm.invoke, prompt_text)
             else:
                 input_vars = {
@@ -364,6 +433,11 @@ class AIService:
                 response=response,
                 confidence=confidence
             )
+
+            # Update fallback text history if LangChain memory is unavailable
+            if not _HAS_LANGCHAIN:
+                self._text_history.append({"role": "user", "text": query.query})
+                self._text_history.append({"role": "ai", "text": response})
 
             self.logger.info(f"AI query processed successfully. Type: {query_type.value}, Confidence: {confidence:.2f}")
             return ai_response
@@ -514,6 +588,8 @@ class AIService:
             if self.memory:
                 self.memory.clear()
                 self.logger.info("AI conversation memory cleared")
+            # Fallback text history
+            self._text_history.clear()
         except Exception as e:
             self.logger.error(f"Failed to clear AI memory: {e}")
 
@@ -526,6 +602,7 @@ class AIService:
             if self.memory:
                 self.memory.clear()
                 self.logger.info("AI conversation memory cleared (sync)")
+            self._text_history.clear()
         except Exception as e:
             self.logger.error(f"Failed to clear AI memory (sync): {e}")
     
@@ -549,7 +626,45 @@ class AIService:
         except Exception as e:
             self.logger.error(f"Failed to get memory summary: {e}")
             return {"error": str(e)}
-    
+
+    def load_memory_summary(self, summary: Dict[str, Any]) -> None:
+        """Load conversation memory from a saved summary.
+
+        Expects the format returned by get_memory_summary(). Restores messages
+        into LangChain memory if available; otherwise, populates fallback text history.
+        """
+        try:
+            messages = summary.get("messages", []) if isinstance(summary, dict) else []
+            if _HAS_LANGCHAIN and self.memory:
+                # Clear current memory
+                self.memory.clear()
+                # Reconstruct messages
+                for m in messages:
+                    mtype = m.get("type", "HumanMessage")
+                    content = m.get("content", "")
+                    if not content:
+                        continue
+                    if mtype == "HumanMessage":
+                        self.memory.chat_memory.add_message(HumanMessage(content=content))
+                    elif mtype == "AIMessage":
+                        self.memory.chat_memory.add_message(AIMessage(content=content))
+                    else:
+                        # Default to HumanMessage for unknown types
+                        self.memory.chat_memory.add_message(HumanMessage(content=content))
+                self.logger.info("AI conversation memory loaded into LangChain memory")
+            else:
+                # Fallback: basic text history
+                self._text_history.clear()
+                for m in messages:
+                    content = m.get("content", "")
+                    if not content:
+                        continue
+                    role = "ai" if m.get("type") == "AIMessage" else "user"
+                    self._text_history.append({"role": role, "text": content})
+                self.logger.info("AI conversation memory loaded into fallback history")
+        except Exception as e:
+            self.logger.error(f"Failed to load AI memory summary: {e}")
+
     async def close(self):
         """Close AI service"""
         try:

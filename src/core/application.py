@@ -297,9 +297,12 @@ class NetworkSwitchAIApp(QMainWindow):
                     self._current_session_id = session_data['session_id']
                     
                 if 'ai_history' in session_data:
-                    self.ai_service.clear_conversation_memory()
-                    # A method to load history would be needed in AIService
-                    # self.ai_service.load_memory_summary(session_data['ai_history'])
+                    # Restore AI chat memory from saved session
+                    try:
+                        self.ai_service.clear_conversation_memory()
+                        self.ai_service.load_memory_summary(session_data['ai_history'])
+                    except Exception as mem_err:
+                        logger.warning(f"Failed to load AI memory from session: {mem_err}")
                     
                 # Re-create session in session_service (conceptual)
                 # await self.session_service.recreate_session(session_data)
@@ -426,16 +429,68 @@ class NetworkSwitchAIApp(QMainWindow):
                 self.error_occurred.emit("AI Error", "Session not found")
                 return
             
-            # Process with AI service
-            response = await self.ai_service.process_query(
+            # Notify UI that AI processing started
+            try:
+                self.ai_response_started.emit(query)
+            except Exception:
+                pass
+
+            # Quick vendor-specific mapping for common intents (e.g., running config)
+            try:
+                quick_cmd = self.ai_service.map_query_to_vendor_command(query, session.vendor_type)
+            except Exception:
+                quick_cmd = None
+
+            if quick_cmd:
+                # Format a concise response and emit suggestions
+                try:
+                    from core.constants import VendorType, CROSS_VENDOR_MAPPINGS
+                    try:
+                        display_vendor = VendorType(session.vendor_type).name
+                    except Exception:
+                        display_vendor = str(session.vendor_type).upper()
+                    response_text = f"For {display_vendor}, use: {quick_cmd}"
+                    self.ai_response_received.emit(session_id, response_text)
+
+                    # Provide a small set of related suggestions
+                    suggestions = []
+                    try:
+                        vendor_enum = VendorType(session.vendor_type)
+                        for key in [
+                            "show_interfaces", "show_vlan", "show_version", "show_routing"
+                        ]:
+                            cmd = CROSS_VENDOR_MAPPINGS.get(key, {}).get(vendor_enum)
+                            if cmd:
+                                suggestions.append(cmd)
+                    except Exception:
+                        suggestions = []
+                    if suggestions:
+                        self.ai_suggestion_received.emit(suggestions)
+                finally:
+                    try:
+                        self.ai_response_ended.emit()
+                    except Exception:
+                        pass
+                return
+
+            # Process using AI service for richer responses
+            from models.device_models import AIQuery
+            ai_query = AIQuery(
                 query=query,
                 vendor_type=session.vendor_type,
-                device_context=context,
-                command_history=session.command_history
+                session_context={"context": context},
+                command_history=session.command_history or []
             )
-            
+            ai_response = await self.ai_service.process_query(ai_query)
+
             logger.info("AI query processed successfully")
-            self.ai_response_received.emit(session_id, response)
+            self.ai_response_received.emit(session_id, ai_response.response)
+            if getattr(ai_response, 'suggested_commands', None):
+                self.ai_suggestion_received.emit(ai_response.suggested_commands)
+            try:
+                self.ai_response_ended.emit()
+            except Exception:
+                pass
             
         except Exception as e:
             logger.error(f"AI processing error: {e}")
@@ -665,4 +720,11 @@ class NetworkSwitchAIApp(QMainWindow):
             logger.error(f"Device name persistence error: {e}")
 
         return info
+
+    async def send_ai_query(self, query: str, context: str):
+        """Public helper to send an AI query for the current session."""
+        if not self._current_session_id:
+            self.error_occurred.emit("AI Error", "No active session")
+            return
+        self._create_tracked_task(self._process_ai_query(self._current_session_id, query, context))
 
