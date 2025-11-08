@@ -20,7 +20,7 @@ from models.device_models import (
     VendorKnowledgeBaseModel, CrossVendorMappingModel,
     Session, CommandResult, VendorTemplate, CrossVendorMapping
 )
-from utils.logging import get_logger
+from utils.logging_utils import get_logger
 
 
 class DatabaseService:

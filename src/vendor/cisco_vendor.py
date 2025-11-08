@@ -9,7 +9,7 @@ from datetime import datetime
 from core.constants import VendorType, CommandType, CISCO_COMMAND_TEMPLATES
 from models.device_models import DeviceInfo, CommandResult, ConnectionConfig, DeviceCapabilities
 from vendor.base_vendor import BaseVendor
-from utils.logging import get_logger
+from utils.logging_utils import get_logger
 
 
 class CiscoVendor(BaseVendor):

@@ -13,7 +13,7 @@ import time
 
 from core.config import AppConfig
 from core.constants import VENDOR_CONFIGS
-from utils.logging import get_logger
+from utils.logging_utils import get_logger
 
 
 class SerialConnection:

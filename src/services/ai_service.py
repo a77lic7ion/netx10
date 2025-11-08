@@ -52,7 +52,7 @@ except Exception:
 from core.config import AppConfig, AIConfig, ProviderConfig
 from core.constants import AIPromptType, VENDOR_AI_PROMPTS, AI_SYSTEM_PROMPTS, CROSS_VENDOR_MAPPINGS, VendorType
 from models.device_models import AIQuery, AIResponse
-from utils.logging import get_logger
+from utils.logging_utils import get_logger
 
 
 class AIStreamingCallbackHandler(StreamingStdOutCallbackHandler):

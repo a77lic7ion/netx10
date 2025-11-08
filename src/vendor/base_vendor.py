@@ -10,7 +10,7 @@ import logging
 
 from core.constants import VendorType, CommandType
 from models.device_models import DeviceInfo, CommandResult, ConnectionConfig, DeviceCapabilities
-from utils.logging import get_logger
+from utils.logging_utils import get_logger
 
 
 class BaseVendor(ABC):

@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from core.application import NetworkSwitchAIApp
 from core.constants import SessionStatus, VendorType
-from utils.logging import get_logger
+from utils.logging_utils import get_logger
 
 
 class StatusBarWidget(QWidget):

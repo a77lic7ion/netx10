@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal
 from core.config import AppConfig
-from utils.logging import get_logger
+from utils.logging_utils import get_logger
 
 
 class PreferencesDialog(QDialog):

@@ -20,7 +20,7 @@ from services.serial_service import SerialService
 from services.database_service import DatabaseService
 from core.config import AppConfig
 from core.constants import VendorType
-from utils.logging import get_logger
+from utils.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -44,6 +44,13 @@ class NetworkSwitchAIApp(QMainWindow):
     
     def __init__(self, config: AppConfig, parent=None):
         super().__init__(parent)
+        # Fallback file tracing during app initialization
+        try:
+            trace_path = Path(__file__).resolve().parent.parent / "logs" / "startup_trace.txt"
+            with open(trace_path, "a", encoding="utf-8") as f:
+                f.write("[application] __init__ start\n")
+        except Exception:
+            trace_path = None
         self.config = config
         self._services_initialized = False
         self._current_session_id: Optional[str] = None
@@ -55,47 +62,74 @@ class NetworkSwitchAIApp(QMainWindow):
         self._send_enter_lock = asyncio.Lock()
         
         # Initialize services
+        try:
+            if trace_path:
+                with open(trace_path, "a", encoding="utf-8") as f:
+                    f.write("[application] Initializing services...\n")
+        except Exception:
+            pass
         self._initialize_services()
+        try:
+            if trace_path:
+                with open(trace_path, "a", encoding="utf-8") as f:
+                    f.write("[application] Services initialized. Setting up UI...\n")
+        except Exception:
+            pass
         
         # Setup UI
         self._setup_ui()
+        try:
+            if trace_path:
+                with open(trace_path, "a", encoding="utf-8") as f:
+                    f.write("[application] UI setup complete. Connecting signals...\n")
+        except Exception:
+            pass
         
         # Connect signals
         self._connect_signals()
+        try:
+            if trace_path:
+                with open(trace_path, "a", encoding="utf-8") as f:
+                    f.write("[application] Signals connected. Setting up auto-save...\n")
+        except Exception:
+            pass
         
         # Setup auto-save timer
         self._setup_auto_save()
+        try:
+            if trace_path:
+                with open(trace_path, "a", encoding="utf-8") as f:
+                    f.write("[application] Auto-save setup complete. Initialization done.\n")
+        except Exception:
+            pass
         
         logger.info("NetworkSwitch AI Assistant initialized successfully")
     
     def _initialize_services(self):
-        """Initialize application services"""
+        """Initialize application services (construct synchronously, init asynchronously)"""
         try:
-            # Database service
+            # Construct services synchronously
             self.db = DatabaseService(self.config)
-            # Run async initialization
-            loop = asyncio.get_event_loop()
-            if not loop.run_until_complete(self.db.initialize()):
-                logger.error("Failed to initialize the database. Exiting.")
-                sys.exit(1)
-            
             self.serial_service = SerialService(self.config.serial)
             self.session_service = SessionService(self.db, self.serial_service, self.config)
-            self.ai_status_changed.emit("Initializing", "AI service is starting...")
             self.ai_service = AIService(self.config.ai)
-            # Asynchronously initialize the AI service
-            self._create_tracked_task(self._initialize_ai_service())
 
             # Forward serial data to terminal output
             self.serial_service.data_listener = lambda data: self.terminal_data_received.emit(data)
-            
+
+            # Schedule async initialization after event loop starts
+            try:
+                QTimer.singleShot(0, lambda: self._create_tracked_task(self._initialize_services_async()))
+            except Exception:
+                # Fallback: create task directly; may fail if no running loop
+                self._create_tracked_task(self._initialize_services_async())
+
             self._services_initialized = True
-            logger.info("All services initialized successfully")
-            
+            logger.info("Services constructed; async initialization scheduled")
+
         except Exception as e:
-            logger.error(f"Failed to initialize services: {e}")
-            self._show_error("Initialization Error", f"Failed to initialize services: {e}")
-            sys.exit(1)
+            logger.error(f"Failed to construct services: {e}")
+            self._show_error("Initialization Error", f"Failed to construct services: {e}")
     
     def _setup_ui(self):
         """Setup user interface"""
@@ -118,6 +152,26 @@ class NetworkSwitchAIApp(QMainWindow):
         
         # Center window on screen
         self._center_window()
+
+    async def _initialize_services_async(self):
+        """Perform asynchronous service initialization once the event loop is running"""
+        try:
+            self.ai_status_changed.emit("Initializing", "AI service is starting...")
+
+            # Initialize database
+            ok = await self.db.initialize()
+            if not ok:
+                logger.error("Failed to initialize the database.")
+                self._show_error("Initialization Error", "Failed to initialize the database.")
+                return
+
+            # Initialize AI service
+            await self._initialize_ai_service()
+
+            logger.info("All services initialized successfully")
+        except Exception as e:
+            logger.error(f"Async service initialization failed: {e}")
+            self._show_error("Initialization Error", f"Async service initialization failed: {e}")
     
     def _connect_signals(self):
         """Connect UI signals to service slots"""

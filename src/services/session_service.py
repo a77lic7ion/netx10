@@ -11,7 +11,7 @@ from services.serial_service import SerialService
 from vendor.vendor_factory import VendorFactory
 from core.config import AppConfig
 from core.constants import SessionStatus, VendorType
-from utils.logging import get_logger
+from utils.logging_utils import get_logger
 from models.device_models import Session as DBSession
 
 class Session:
